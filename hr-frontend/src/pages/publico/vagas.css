@@ -1,0 +1,158 @@
+/* CONTAINER GERAL DA PÁGINA DE VAGAS */
+
+.vagas-page {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* CABEÇALHO */
+
+.vagas-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 1rem;
+  color: #000000;
+}
+
+.vagas-title {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #000000; /* quase preto */
+}
+
+.vagas-subtitle {
+  margin: 0.25rem 0 0;
+  font-size: 0.95rem;
+  color: #000000;
+}
+
+/* CARD QUE ENVOLVE O AG GRID */
+
+.vagas-card {
+  border-radius: 16px;
+  background-color: #ffffff;
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.18);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  overflow: hidden;
+}
+
+/* WRAPPER DO GRID – CONTROLAR ALTURA E LARGURA */
+
+.vagas-grid-wrapper {
+  height: 420px;
+  width: 100%;
+}
+
+/* ESTILIZAÇÃO DO AG GRID A COMBINAR COM OS AZUIS DO PROJETO */
+
+.vagas-grid-wrapper .ag-root-wrapper {
+  border: none;
+}
+
+/* Cabeçalho da tabela */
+.vagas-grid-wrapper .ag-header {
+  background: #0000ff;
+  color: #ffffff;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.25);
+}
+
+.vagas-grid-wrapper .ag-header-cell,
+.vagas-grid-wrapper .ag-header-group-cell {
+  border-right: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.vagas-grid-wrapper .ag-header-cell-label,
+.vagas-grid-wrapper .ag-header-cell-text {
+  font-weight: 600;
+  font-size: 1rem;
+  color: #ffffff !important;
+}
+
+/* Linhas alternadas (zebra) */
+.vagas-grid-wrapper .ag-row:nth-child(even) {
+  background-color: #f9fafb;
+}
+
+.vagas-grid-wrapper .ag-row:nth-child(odd) {
+  background-color: #ffffff;
+}
+
+/* Hover nas linhas */
+.vagas-grid-wrapper .ag-row-hover {
+  background-color: #e0e7ff !important; /* azul clarinho */
+}
+
+/* Células de texto */
+.vagas-grid-wrapper .ag-cell {
+  font-size: 0.95rem;
+  color: #111827;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+/* Foco nas células */
+.vagas-grid-wrapper .ag-cell-focus {
+  outline: 2px solid rgba(73, 73, 255, 0.4) !important;
+}
+
+/* Barra de scroll discreta */
+.vagas-grid-wrapper .ag-body-viewport::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.vagas-grid-wrapper .ag-body-viewport::-webkit-scrollbar-track {
+  background: #e5e7eb;
+}
+
+.vagas-grid-wrapper .ag-body-viewport::-webkit-scrollbar-thumb {
+  background: #9ca3af;
+  border-radius: 999px;
+}
+
+/* RESPONSIVO */
+
+@media (max-width: 768px) {
+  .vagas-page {
+    padding: 1rem;
+  }
+
+  .vagas-card {
+    border-radius: 12px;
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.16);
+  }
+
+  .vagas-title {
+    font-size: 1.3rem;
+  }
+
+  .vagas-grid-wrapper {
+    height: 360px;
+  }
+}
+
+/* BOTÃO "APPLY" NA TABELA DE VAGAS */
+
+.button-9 {
+    appearance: button;
+    backface-visibility: hidden;
+    background-color: #0000ff;
+    border-radius: 6px;
+    border-width: 0;
+    box-sizing: border-box;
+    color: #fff;
+    cursor: pointer;
+    font-family: system-ui, "Segoe UI", Roboto, "Helvetica Neue", Ubuntu, sans-serif;
+    font-size: 100%;
+    height: 1.3rem;
+    line-height: 1.15;
+    outline: none;
+    overflow: hidden;
+    position: relative;
+    text-align: center;
+    width: 50%;
+    height: 1.5rem;
+}

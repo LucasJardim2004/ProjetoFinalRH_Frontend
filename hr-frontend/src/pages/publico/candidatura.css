@@ -1,0 +1,214 @@
+
+.candidatura-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 3rem 1rem;
+  background: radial-gradient(
+    circle at top,
+    #e6e9ff 0,
+    #f5f6ff 45%,
+    #ffffff 100%
+  );
+}
+
+.candidatura-card {
+  width: 100%;
+  max-width: 860px;
+  background-color: #ffffff;
+  border-radius: 18px;
+  padding: 2.25rem 2.5rem;
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(73, 73, 255, 0.15); 
+}
+
+
+.candidatura-header h1 {
+  margin: 0;
+  font-size: 1.9rem;
+  color: #000000;
+}
+
+.candidatura-header p {
+  margin-top: 0.4rem;
+  font-size: 0.95rem;
+  color: #4b5563;
+}
+
+
+.candidatura-form {
+  margin-top: 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+
+.form-section h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1.1rem;
+  color: #111827;
+}
+
+
+.section-grid {
+  display: grid;
+  gap: 1rem 1.5rem;
+}
+
+@media (min-width: 720px) {
+  .section-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.form-group label {
+  font-size: 0.9rem;
+  color: #111827;
+}
+
+.required {
+  color: #dc2626;
+}
+
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  padding: 0.55rem 0.75rem;
+  border-radius: 10px;
+  border: 1px solid #d1d5db;
+  font-size: 0.95rem;
+  font-family: inherit;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease,
+    background-color 0.15s ease, transform 0.08s ease;
+  background-color: #ffffff;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #4949ff;
+  box-shadow: 0 0 0 2px rgba(73, 73, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.form-group textarea {
+  resize: vertical;
+}
+
+
+.cv-upload {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.cv-upload input[type="file"] {
+  display: none;
+}
+
+.cv-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.55rem 1.1rem;
+  border-radius: 999px;
+  border: 1px solid rgba(73, 73, 255, 0.4);
+  background: linear-gradient(135deg, #ffffff, #e6e9ff);
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #111827;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.08s ease,
+    box-shadow 0.1s ease;
+}
+
+.cv-button:hover {
+  background: linear-gradient(135deg, #f5f6ff, #e0e2ff);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(73, 73, 255, 0.25);
+}
+
+.cv-filename {
+  font-size: 0.85rem;
+  color: #4b5563;
+}
+
+.field-help {
+  font-size: 0.8rem;
+  color: #9ca3af;
+}
+
+
+.form-actions {
+  margin-top: 0.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+
+.primary-button,
+.secondary-button {
+  border-radius: 999px;
+  padding: 0.7rem 1.6rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  transition: transform 0.08s ease, box-shadow 0.1s ease, opacity 0.1s ease,
+    background-color 0.15s ease;
+}
+
+
+.primary-button {
+  background: linear-gradient(135deg, #4949ff, #0000ff);
+  color: #ffffff;
+  box-shadow: 0 14px 30px rgba(0, 0, 255, 0.45);
+}
+
+.primary-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 18px 40px rgba(0, 0, 255, 0.5);
+}
+
+.primary-button:active {
+  transform: translateY(0);
+  box-shadow: 0 10px 24px rgba(0, 0, 255, 0.4);
+  opacity: 0.96;
+}
+
+
+.secondary-button {
+  background-color: #ffffff;
+  color: #111827;
+  border: 1px solid rgba(73, 73, 255, 0.6);
+}
+
+.secondary-button:hover {
+  background-color: #f5f6ff;
+}
+
+.secondary-button:active {
+  background-color: #e6e9ff;
+}
+
+
+.candidatura-card a {
+  color: #0000ff;
+}
+
+.candidatura-card a:hover {
+  color: #4949ff;
+}
