@@ -1,21 +1,33 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { createOpening } from "../../services/apiClient";
+import { useLocation, useNavigate } from "react-router-dom";
+import { updateOpening } from "../../services/apiClient";
 import "./CriarVaga.css";
 
-function CriaVaga() {
-  const [jobTitle, setJobTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState(null);
-  const [successMsg, setSuccessMsg] = useState(null);
-
+function EditarVaga() {
+  const location = useLocation();
   const navigate = useNavigate();
+
+  // Dados vindos do navigate em Vagas.jsx
+  const { openingId, jobTitle: initialJobTitle, description: initialDescription } =
+    location.state || {};
+
+  const [jobTitle, setJobTitle] = useState(initialJobTitle || "");
+  const [description, setDescription] = useState(initialDescription || "");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState(
+    !openingId ? "No opening selected to edit." : null
+  );
+  const [successMsg, setSuccessMsg] = useState(null);
 
   async function handleSubmit(e) {
     e.preventDefault();
     setError(null);
     setSuccessMsg(null);
+
+    if (!openingId) {
+      setError("No opening selected to edit.");
+      return;
+    }
 
     const trimmedTitle = jobTitle.trim();
     const trimmedDescription = description.trim();
@@ -36,42 +48,43 @@ function CriaVaga() {
     }
 
     const payload = {
+      openingID: openingId, 
       jobTitle: trimmedTitle,
       description: trimmedDescription || null,
     };
 
     try {
       setSubmitting(true);
-      await (payload);
-      setSuccessMsg("Opening created successfully.");
-      setJobTitle("");
-      setDescription("");
-      navigate("/vagas");
+      await updateOpening(openingId, payload);
+      setSuccessMsg("Opening updated successfully.");
+
+      setTimeout(() => {
+        navigate("/vagas");
+      }, 800);
     } catch (err) {
-      setError("Error creating opening: " + err.message);
+      setError("Error updating opening: " + err.message);
     } finally {
       setSubmitting(false);
     }
   }
 
-  function handleClear() {
-    setJobTitle("");
-    setDescription("");
-    setError(null);
-    setSuccessMsg(null);
+  function handleCancel() {
+    navigate("/vagas");
   }
 
   return (
     <div className="criar-vaga-page">
       <div className="criar-vaga-card">
         <header className="criar-vaga-header">
-          <h1>Create opening</h1>
-          <p>
-            Fill in the details below to create a new job opening.
-          </p>
+          <h1>Edit opening</h1>
+          <p>Update the details of the selected job opening.</p>
         </header>
 
-        {error && <div className="criar-vaga-alert criar-vaga-alert-error">{error}</div>}
+        {error && (
+          <div className="criar-vaga-alert criar-vaga-alert-error">
+            {error}
+          </div>
+        )}
         {successMsg && (
           <div className="criar-vaga-alert criar-vaga-alert-success">
             {successMsg}
@@ -114,17 +127,17 @@ function CriaVaga() {
             <button
               type="button"
               className="btn-secondary"
-              onClick={handleClear}
+              onClick={handleCancel}
             >
-              Clear
+              Cancel
             </button>
 
             <button
               type="submit"
               className="btn-primary"
-              disabled={submitting}
+              disabled={submitting || !openingId}
             >
-              {submitting ? "Saving..." : "Create opening"}
+              {submitting ? "Saving..." : "Save changes"}
             </button>
           </div>
         </form>
@@ -133,4 +146,4 @@ function CriaVaga() {
   );
 }
 
-export default CriaVaga;
+export default EditarVaga;

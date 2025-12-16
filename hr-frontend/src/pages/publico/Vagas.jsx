@@ -25,12 +25,28 @@ const ApplyCellRenderer = (props) => {
   };
 
   const handleEdit = () => {
-    // Mais tarde podes navegar para uma página de edição: /rh/editar-vaga/:id
-    alert(`Edit opening: ${data.jobTitle}`);
+    navigate("/rh/editarVaga", {
+      state: {
+        openingId: data.id,
+        jobTitle: data.jobTitle,
+        description: data.description,
+      },
+    });
   };
 
-  const handleDelete = () => {
-    await deleteOpening(data.id);
+  const handleDelete = async () => {
+    const confirmDelete = window.confirm(
+      `Are you sure you want to delete the opening "${data.jobTitle}"?`
+    );
+    if (!confirmDelete) return;
+
+    try {
+      await deleteOpening(data.id);
+      alert("Opening deleted successfully.");
+    } catch (err) {
+      console.error("Error deleting opening:", err);
+      alert("Error deleting opening. Check console for details.");
+    }
   };
 
   return (
