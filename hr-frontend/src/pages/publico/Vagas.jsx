@@ -14,12 +14,11 @@ import "ag-grid-community/styles/ag-theme-quartz.css";
 
 import "./vagas.css";
 
-import { getOpenings } from "../../services/apiClient";
-import { deleteOpening } from "../../services/apiClient";
+import { getOpenings, deleteOpening } from "../../services/apiClient";
 
 const ApplyCellRenderer = (props) => {
   const navigate = useNavigate();
-  const { data } = props;
+  const { data, onDelete } = props; 
 
   const handleApply = () => {
     navigate("/candidatura", { state: { jobTitle: data.jobTitle } });
@@ -35,20 +34,13 @@ const ApplyCellRenderer = (props) => {
     });
   };
 
-  const handleDelete = async () => {
-    const confirmDelete = window.confirm(
-      `Are you sure you want to delete the opening "${data.jobTitle}"?`
-    );
-    if (!confirmDelete) return;
-
-    try {
-      await deleteOpening(data.openingID);
-      setRowData((prev) => prev.filter((row) => row.openingID !== data.openingID)); //Refresh grid data
-      alert("Opening deleted successfully.");
-    } catch (err) {
-      console.error("Error deleting opening:", err);
-      alert("Error deleting opening. Check console for details.");
+  const handleDeleteClick = () => {
+    if (!data.openingID) {
+      console.error("No openingID on row:", data);
+      alert("Could not detect opening ID for this row.");
+      return;
     }
+    onDelete(data.openingID); 
   };
 
   return (
@@ -65,7 +57,7 @@ const ApplyCellRenderer = (props) => {
         type="button"
         className="vagas-icon-btn vagas-icon-btn-danger"
         title="Delete opening"
-        onClick={handleDelete}
+        onClick={handleDeleteClick}
       >
         🗑️
       </button>
@@ -83,33 +75,26 @@ function Vagas() {
   function handleGoToCreateOpening() {
     navigate("/rh/criarVaga");
   }
-  // const [rowData] = useState([
-  //   {
-  //     id: 1,
-  //     jobTitle: "SCRUM Master",
-  //     description: "Agile team facilitator",
-  //     dateCreated: "2025-01-10",
-  //   },
-  //   {
-  //     id: 2,
-  //     jobTitle: "Software Developer",
-  //     description: "Software development specialist",
-  //     dateCreated: "2025-01-20",
-  //   },
-  //   {
-  //     id: 3,
-  //     jobTitle: "Business Analyst",
-  //     description: "Business process expert",
-  //     dateCreated: "2025-07-05",
-  //   },
-  //   {
-  //     id: 4,
-  //     jobTitle: "HR Manager",
-  //     description: "Human resources leader",
-  //     dateCreated: "2025-10-25",
-  //   },
-  // ]);
 
+  async function handleDeleteOpening(openingID) {
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this opening?"
+    );
+    if (!confirmDelete) return;
+
+    try {
+      await deleteOpening(openingID);
+
+      setRowData((prev) =>
+        prev.filter((row) => row.openingID !== openingID)
+      );
+
+      alert("Opening deleted successfully.");
+    } catch (err) {
+      console.error("Error deleting opening:", err);
+      alert("Error deleting opening. Check console for details.");
+    }
+  }
 
   useEffect(() => {
     async function loadOpenings() {
@@ -143,7 +128,10 @@ function Vagas() {
     { field: "dateCreated", headerName: "Date Created" },
     {
       headerName: "Actions",
-      cellRenderer: handleDelete,
+      cellRenderer: ApplyCellRenderer, 
+      cellRendererParams: {
+        onDelete: handleDeleteOpening, 
+      },
       flex: 1.5,
     },
   ]);
