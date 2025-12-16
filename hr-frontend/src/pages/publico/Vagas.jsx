@@ -30,8 +30,7 @@ const ApplyCellRenderer = (props) => {
   };
 
   const handleDelete = () => {
-    // Mais tarde: chamar API para apagar
-    alert(`Delete opening: ${data.jobTitle}`);
+    await deleteOpening(data.id);
   };
 
   return (
@@ -64,8 +63,6 @@ function Vagas() {
   const navigate = useNavigate();
 
   function handleGoToCreateOpening() {
-    // Garante que na config de rotas tens algo como:
-    // <Route path="/rh/criarVaga" element={<CriaVaga />} />
     navigate("/rh/criarVaga");
   }
 
@@ -102,7 +99,7 @@ function Vagas() {
     {
       headerName: "Actions",
       cellRenderer: ApplyCellRenderer,
-      flex: 0.7,
+      flex: 1.5,
     },
   ]);
 
