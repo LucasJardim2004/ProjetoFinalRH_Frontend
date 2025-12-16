@@ -50,6 +50,7 @@ const ApplyCellRenderer = (props) => {
         className="vagas-icon-btn"
         title="Edit opening"
         onClick={handleEdit}
+        className="vagas-icon-btn"
       >
         ✏️
       </button>
@@ -58,6 +59,7 @@ const ApplyCellRenderer = (props) => {
         className="vagas-icon-btn vagas-icon-btn-danger"
         title="Delete opening"
         onClick={handleDeleteClick}
+        className="vagas-icon-btn vagas-icon-btn-danger"
       >
         🗑️
       </button>
