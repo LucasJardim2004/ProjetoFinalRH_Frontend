@@ -20,7 +20,7 @@ const ApplyCellRenderer = (props) => {
   const navigate = useNavigate();
   const { data } = props;
 
-  const handleClick = () => {
+  const handleApply = () => {
     navigate("/candidatura", { state: { jobTitle: data.jobTitle } });
   };
 
@@ -64,6 +64,8 @@ function Vagas() {
   const navigate = useNavigate();
 
   function handleGoToCreateOpening() {
+    // Garante que na config de rotas tens algo como:
+    // <Route path="/rh/criarVaga" element={<CriaVaga />} />
     navigate("/rh/criarVaga");
   }
 
