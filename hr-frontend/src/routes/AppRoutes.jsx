@@ -19,7 +19,7 @@ import DashboardFuncionario from "../pages/funcionario/DashboardFuncionario.jsx"
 import CriarVaga from "../pages/rh/CriarVaga.jsx";
 import EditarVaga from "../pages/rh/EditarVaga.jsx";
 // import DashboardRh from "../pages/rh/DashboardRh.jsx";
-// import ColaboradoresList from "../pages/rh/ColaboradoresList.jsx";
+import ListaFuncionarios from "../pages/rh/ListaFuncionarios.jsx";
 // import ColaboradorDetalhe from "../pages/rh/ColaboradorDetalhe.jsx";
 // import GestaoPagamentosMov from "../pages/rh/GestaoPagamentosMov.jsx";
 // import CandidatosList from "../pages/rh/CandidatosList.jsx";
@@ -40,6 +40,7 @@ function AppRoutes() {
 
         <Route path="/rh/criarVaga" element={<CriarVaga />} />
         <Route path="/rh/editarVaga" element={<EditarVaga />} />
+        <Route path="/rh/listaFuncionarios" element={<ListaFuncionarios />} />
 
         {/* Área interna COM header + sidebar */}
         <Route path="/" element={<AppLayout role={fakeRole} />}>
