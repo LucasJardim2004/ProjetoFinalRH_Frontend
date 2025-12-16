@@ -42,6 +42,11 @@ const ApplyCellRenderer = (props) => {
 
 function Vagas() {
   const [rowData, setRowData] = useState([]);
+  const navigate = useNavigate();
+
+  function handleGoToCreateOpening() {
+    navigate("/rh/criar-vaga");
+  }
 
   useEffect(() => {
     async function loadOpenings() {
@@ -90,6 +95,25 @@ function Vagas() {
             system.
           </p>
         </div>
+
+        <button
+          type="button"
+          onClick={handleGoToCreateOpening}
+          style={{
+            padding: "0.45rem 0.9rem",
+            borderRadius: "999px",
+            border: "none",
+            background: "linear-gradient(135deg, #4949FF 0%, #0000FF 100%)",
+            color: "#ffffff",
+            fontSize: "0.85rem",
+            fontWeight: 600,
+            cursor: "pointer",
+            boxShadow: "0 8px 18px rgba(0, 0, 255, 0.28)",
+            whiteSpace: "nowrap",
+          }}
+        >
+          + Create opening
+        </button>
       </div>
 
       <div className="vagas-card">
