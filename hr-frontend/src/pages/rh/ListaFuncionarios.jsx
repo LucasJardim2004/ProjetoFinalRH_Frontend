@@ -87,7 +87,7 @@ function ListaFuncionarios() {
         <div>
           <h1 className="vagas-title">Employees</h1>
           <p className="vagas-subtitle">
-            Below you can find a paginated list of employees (10 per page).
+            Below you can find a paginated list of employees (20 per page).
           </p>
         </div>
       </div>
@@ -102,7 +102,7 @@ function ListaFuncionarios() {
             rowHeight={40}
             headerHeight={40}
             pagination={true}
-            paginationPageSize={10}
+            paginationPageSize={20}
           />
         </div>
       </div>
