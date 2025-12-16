@@ -15,6 +15,7 @@ import "ag-grid-community/styles/ag-theme-quartz.css";
 import "./vagas.css";
 
 import { getOpenings } from "../../services/apiClient";
+import { deleteOpening } from "../../services/apiClient";
 
 const ApplyCellRenderer = (props) => {
   const navigate = useNavigate();
@@ -27,7 +28,7 @@ const ApplyCellRenderer = (props) => {
   const handleEdit = () => {
     navigate("/rh/editarVaga", {
       state: {
-        openingId: data.id,
+        openingId: data.openingID,
         jobTitle: data.jobTitle,
         description: data.description,
       },
@@ -41,8 +42,8 @@ const ApplyCellRenderer = (props) => {
     if (!confirmDelete) return;
 
     try {
-      console.log("Deleting opening with ID:", data.id);
-      await deleteOpening(data.id);
+      console.log("Deleting opening with ID:", data.openingID);
+      await deleteOpening(data.openingID);
       alert("Opening deleted successfully.");
     } catch (err) {
       console.error("Error deleting opening:", err);
@@ -115,7 +116,7 @@ function Vagas() {
       try {
         const openings = await getOpenings();
         const mapped = openings.map((o) => ({
-          id: o.openingID ?? o.openingId ?? o.id,
+          openingID: o.openingID,
           jobTitle: o.jobTitle,
           description: o.description,
           dateCreated: o.dateCreated?.slice(0, 10),
