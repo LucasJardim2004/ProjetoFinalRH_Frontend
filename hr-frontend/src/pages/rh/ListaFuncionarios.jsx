@@ -87,7 +87,7 @@ function ListaFuncionarios() {
         <div>
           <h1 className="vagas-title">Employees</h1>
           <p className="vagas-subtitle">
-            Below you can find a list of employees (first 10 from the system).
+            Below you can find a paginated list of employees (10 per page).
           </p>
         </div>
       </div>
@@ -101,6 +101,8 @@ function ListaFuncionarios() {
             animateRows={true}
             rowHeight={40}
             headerHeight={40}
+            pagination={true}
+            paginationPageSize={10}
           />
         </div>
       </div>
