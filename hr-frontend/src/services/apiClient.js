@@ -68,3 +68,44 @@ export function deleteOpening(id) {
   });
 }
 
+/**
+ * EMPLOYEES
+ * Controller: EmployeeController
+ * Route base: api/v1/Employee
+ */
+
+// GET /api/v1/Employee
+export function getEmployees() {
+  return apiFetch("/Employee");
+}
+
+// GET /api/v1/Employee/{id}
+export function getEmployee(id) {
+  return apiFetch(`/Employee/${id}`);
+}
+
+// POST /api/v1/Employee
+// Expects an EmployeeWithPersonDTO-like object:
+// {
+//   personType: "...",
+//   firstName: "...",
+//   lastName: "...",
+//   employeeDTO: { ... }
+// }
+export function createEmployee(employeeWithPersonData) {
+  return apiFetch("/Employee", {
+    method: "POST",
+    body: employeeWithPersonData,
+  });
+}
+
+// PATCH /api/v1/Employee/{id}
+// Expects an EmployeeDTO-like object in the body,
+// including BusinessEntityID to satisfy backend validation.
+export function updateEmployee(id, employeePartialDto) {
+  return apiFetch(`/Employee/${id}`, {
+    method: "PATCH",
+    body: employeePartialDto,
+  });
+}
+
