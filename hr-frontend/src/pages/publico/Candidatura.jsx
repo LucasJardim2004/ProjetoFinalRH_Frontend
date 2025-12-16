@@ -74,7 +74,7 @@ function Candidatura() {
                 <input
                   id="email"
                   type="email"
-                  placeholder="e.g. user@example.com"
+                  placeholder="e.g. user@email.com"
                   required
                 />
               </div>

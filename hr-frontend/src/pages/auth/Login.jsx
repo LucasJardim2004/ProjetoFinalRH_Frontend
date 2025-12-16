@@ -13,8 +13,8 @@ function Login() {
     <div className="login-page">
       <div className="login-card">
         <div className="login-header">
-          <h1>HR System</h1>
-          <p>Área reservada a funcionários e RH</p>
+          <h1>Company System</h1>
+          <p>Área reservada a Funcionários</p>
         </div>
 
         <form onSubmit={handleSubmit} className="login-form">
@@ -23,7 +23,7 @@ function Login() {
             <input
               id="identifier"
               type="text"
-              placeholder="ex: joao.silva@empresa.pt"
+              placeholder="ex: user@email.com"
               autoComplete="username"
             />
           </div>
@@ -52,7 +52,7 @@ function Login() {
         </form>
 
         <div className="login-footer">
-          <span>© {new Date().getFullYear()} Recursos Humanos</span>
+          <span>© {new Date().getFullYear()} Company System</span>
         </div>
       </div>
     </div>

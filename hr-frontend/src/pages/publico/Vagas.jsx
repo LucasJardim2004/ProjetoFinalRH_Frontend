@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 // AG Grid core + módulos
@@ -14,6 +14,8 @@ import "ag-grid-community/styles/ag-theme-quartz.css";
 
 import "./vagas.css";
 
+import { getOpenings } from "../../services/apiClient";
+
 const ApplyCellRenderer = (props) => {
   const navigate = useNavigate();
   const { data } = props;
@@ -28,14 +30,10 @@ const ApplyCellRenderer = (props) => {
         height: "100%",
         display: "flex",
         alignItems: "center",
-        justifyContent: "center", 
+        justifyContent: "center",
       }}
     >
-      <button
-        type="button"
-        onClick={handleClick}
-        className="button-9"
-      >
+      <button type="button" onClick={handleClick} className="button-9">
         Apply
       </button>
     </div>
@@ -43,29 +41,27 @@ const ApplyCellRenderer = (props) => {
 };
 
 function Vagas() {
-  // Row Data: The data to be displayed.
-  const [rowData] = useState([
-    {
-      jobTitle: "SCRUM Master",
-      description: "Agile team facilitator",
-      dateCreated: "2025-01-10",
-    },
-    {
-      jobTitle: "Software Developer",
-      description: "Software development specialist",
-      dateCreated: "2025-01-20",
-    },
-    {
-      jobTitle: "Business Analyst",
-      description: "Business process expert",
-      dateCreated: "2025-07-05",
-    },
-    {
-      jobTitle: "HR Manager",
-      description: "Human resources leader",
-      dateCreated: "2025-10-25",
-    },
-  ]);
+  const [rowData, setRowData] = useState([]);
+
+  useEffect(() => {
+    async function loadOpenings() {
+      try {
+        const openings = await getOpenings();
+        const mapped = openings.map((o) => ({
+          id: o.openingID ?? o.openingId ?? o.id,
+          jobTitle: o.jobTitle,
+          description: o.description,
+          dateCreated: o.dateCreated?.slice(0, 10),
+          openFlag: o.openFlag,
+        }));
+        setRowData(mapped);
+      } catch (err) {
+        console.error("Error loading openings", err);
+      }
+    }
+
+    loadOpenings();
+  }, []);
 
   const defaultColDef = {
     sortable: false,
@@ -104,8 +100,8 @@ function Vagas() {
             columnDefs={colDefs}
             defaultColDef={defaultColDef}
             animateRows={true}
-            rowHeight={40} 
-            headerHeight={40} 
+            rowHeight={40}
+            headerHeight={40}
           />
         </div>
       </div>
