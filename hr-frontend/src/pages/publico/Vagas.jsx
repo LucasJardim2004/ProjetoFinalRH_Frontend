@@ -75,7 +75,7 @@ const ApplyCellRenderer = (props) => {
 };
 
 function Vagas() {
-  // const [rowData, setRowData] = useState([]);
+  const [rowData, setRowData] = useState([]);
   const navigate = useNavigate();
 
   function handleGoToCreateOpening() {
