@@ -42,8 +42,8 @@ const ApplyCellRenderer = (props) => {
     if (!confirmDelete) return;
 
     try {
-      console.log("Deleting opening with ID:", data.openingID);
       await deleteOpening(data.openingID);
+      setRowData((prev) => prev.filter((row) => row.openingID !== data.openingID)); //Refresh grid data
       alert("Opening deleted successfully.");
     } catch (err) {
       console.error("Error deleting opening:", err);
@@ -143,7 +143,7 @@ function Vagas() {
     { field: "dateCreated", headerName: "Date Created" },
     {
       headerName: "Actions",
-      cellRenderer: ApplyCellRenderer,
+      cellRenderer: handleDelete,
       flex: 1.5,
     },
   ]);
