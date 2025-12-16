@@ -156,3 +156,31 @@
     width: 50%;
     height: 1.5rem;
 }
+
+/* BOTÃO PARA CRIAR NOVA VAGA */
+
+.vagas-create-btn {
+  padding: 0.45rem 0.9rem;
+  border-radius: 999px;
+  border: none;
+  background: linear-gradient(135deg, #4949ff 0%, #0000ff 100%);
+  color: #ffffff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 8px 18px rgba(0, 0, 255, 0.28);
+  white-space: nowrap;
+  font-family: inherit;
+  transition: transform 0.08s ease, box-shadow 0.12s ease, opacity 0.12s ease;
+}
+
+.vagas-create-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 26px rgba(0, 0, 255, 0.35);
+}
+
+.vagas-create-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 5px 14px rgba(0, 0, 255, 0.3);
+  opacity: 0.95;
+}

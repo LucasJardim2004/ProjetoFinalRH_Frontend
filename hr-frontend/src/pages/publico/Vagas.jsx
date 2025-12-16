@@ -24,16 +24,35 @@ const ApplyCellRenderer = (props) => {
     navigate("/candidatura", { state: { jobTitle: data.jobTitle } });
   };
 
+  const handleEdit = () => {
+    // Mais tarde podes navegar para uma página de edição: /rh/editar-vaga/:id
+    alert(`Edit opening: ${data.jobTitle}`);
+  };
+
+  const handleDelete = () => {
+    // Mais tarde: chamar API para apagar
+    alert(`Delete opening: ${data.jobTitle}`);
+  };
+
   return (
-    <div
-      style={{
-        height: "100%",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-      }}
-    >
-      <button type="button" onClick={handleClick} className="button-9">
+    <div className="vagas-actions-cell">
+      <button
+        type="button"
+        className="vagas-icon-btn"
+        title="Edit opening"
+        onClick={handleEdit}
+      >
+        ✏️
+      </button>
+      <button
+        type="button"
+        className="vagas-icon-btn vagas-icon-btn-danger"
+        title="Delete opening"
+        onClick={handleDelete}
+      >
+        🗑️
+      </button>
+      <button type="button" onClick={handleApply} className="button-9">
         Apply
       </button>
     </div>
@@ -45,7 +64,7 @@ function Vagas() {
   const navigate = useNavigate();
 
   function handleGoToCreateOpening() {
-    navigate("/rh/criar-vaga");
+    navigate("/rh/criarVaga");
   }
 
   useEffect(() => {
@@ -99,18 +118,7 @@ function Vagas() {
         <button
           type="button"
           onClick={handleGoToCreateOpening}
-          style={{
-            padding: "0.45rem 0.9rem",
-            borderRadius: "999px",
-            border: "none",
-            background: "linear-gradient(135deg, #4949FF 0%, #0000FF 100%)",
-            color: "#ffffff",
-            fontSize: "0.85rem",
-            fontWeight: 600,
-            cursor: "pointer",
-            boxShadow: "0 8px 18px rgba(0, 0, 255, 0.28)",
-            whiteSpace: "nowrap",
-          }}
+          className="vagas-create-btn"
         >
           + Create opening
         </button>
