@@ -41,6 +41,7 @@ const ApplyCellRenderer = (props) => {
     if (!confirmDelete) return;
 
     try {
+      console.log("Deleting opening with ID:", data.id);
       await deleteOpening(data.id);
       alert("Opening deleted successfully.");
     } catch (err) {
