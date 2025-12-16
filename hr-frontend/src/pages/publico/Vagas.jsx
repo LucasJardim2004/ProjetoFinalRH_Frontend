@@ -75,12 +75,39 @@ const ApplyCellRenderer = (props) => {
 };
 
 function Vagas() {
-  const [rowData, setRowData] = useState([]);
+  // const [rowData, setRowData] = useState([]);
   const navigate = useNavigate();
 
   function handleGoToCreateOpening() {
     navigate("/rh/criarVaga");
   }
+  // const [rowData] = useState([
+  //   {
+  //     id: 1,
+  //     jobTitle: "SCRUM Master",
+  //     description: "Agile team facilitator",
+  //     dateCreated: "2025-01-10",
+  //   },
+  //   {
+  //     id: 2,
+  //     jobTitle: "Software Developer",
+  //     description: "Software development specialist",
+  //     dateCreated: "2025-01-20",
+  //   },
+  //   {
+  //     id: 3,
+  //     jobTitle: "Business Analyst",
+  //     description: "Business process expert",
+  //     dateCreated: "2025-07-05",
+  //   },
+  //   {
+  //     id: 4,
+  //     jobTitle: "HR Manager",
+  //     description: "Human resources leader",
+  //     dateCreated: "2025-10-25",
+  //   },
+  // ]);
+
 
   useEffect(() => {
     async function loadOpenings() {
