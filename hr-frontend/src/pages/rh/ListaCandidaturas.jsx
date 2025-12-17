@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 // AG Grid core + módulos
 import { ModuleRegistry, AllCommunityModule } from "ag-grid-community";
@@ -14,34 +14,53 @@ import "ag-grid-community/styles/ag-theme-quartz.css";
 
 import "./ListaCandidaturas.css";
 
-import { getEmployees } from "../../services/apiClient";
+import { getCandidateInfosByOpening } from "../../services/apiClient";
 
-function ListaFuncionarios() {
+function ListaCandidaturas() {
   const [rowData, setRowData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const location = useLocation();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    async function loadEmployees() {
-      try {
-        const employees = await getEmployees();
+  const openingID = location.state?.openingID;
+  const jobTitle = location.state?.jobTitle;
 
-        const mapped = employees.map((e) => ({
-          businessEntityID: e.businessEntityID,
-          jobTitle: e.jobTitle,
-          gender: e.gender,
-          maritalStatus: e.maritalStatus,
-          hireDate: e.hireDate.slice(0, 10),
-          birthDate: e.birthDate.slice(0, 10),
+  useEffect(() => {
+    async function loadCandidates() {
+      if (!openingID) {
+        console.warn("No openingID provided to ListaCandidaturas page.");
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const candidates = await getCandidateInfosByOpening(openingID);
+
+        const mapped = (candidates || []).map((c) => ({
+          id: c.id ?? c.ID,
+          jobCandidateID: c.jobCandidateID ?? c.JobCandidateID,
+          fullName: [c.firstName, c.middleName, c.lastName]
+            .filter(Boolean)
+            .join(" "),
+          email: c.email,
+          phoneNumber: c.phoneNumber,
+          gender: c.gender,
+          maritalStatus: c.maritalStatus,
+          birthDate: c.birthDate ? c.birthDate.slice(0, 10) : "",
+          nationalID: c.nationalID,
+          comment: c.comment,
         }));
 
         setRowData(mapped);
       } catch (err) {
-        console.error("Error loading employees", err);
+        console.error("Error loading candidates for opening", err);
+      } finally {
+        setLoading(false);
       }
     }
 
-    loadEmployees();
-  }, []);
+    loadCandidates();
+  }, [openingID]);
 
   const defaultColDef = {
     sortable: false,
@@ -52,32 +71,34 @@ function ListaFuncionarios() {
 
   const [colDefs] = useState([
     {
-      field: "businessEntityID",
-      headerName: "ID",
-      maxWidth: 110,
+      field: "jobCandidateID",
+      headerName: "Candidate ID",
+      maxWidth: 140,
     },
     {
-      field: "jobTitle",
-      headerName: "Job Title",
-      flex: 1.2,
+      field: "fullName",
+      headerName: "Name",
+      flex: 1.4,
     },
     {
-      field: "gender",
-      headerName: "Gender",
-      maxWidth: 120,
+      field: "email",
+      headerName: "Email",
+      flex: 1.6,
     },
     {
-      field: "maritalStatus",
-      headerName: "Marital Status",
+      field: "phoneNumber",
+      headerName: "Phone",
+      maxWidth: 160,
+    },
+    {
+      field: "nationalID",
+      headerName: "National ID",
       maxWidth: 150,
-    },
-    {
-      field: "hireDate",
-      headerName: "Hire Date",
     },
     {
       field: "birthDate",
       headerName: "Birth Date",
+      maxWidth: 140,
     },
   ]);
 
@@ -85,11 +106,31 @@ function ListaFuncionarios() {
     <div className="vagas-page">
       <div className="vagas-header">
         <div>
-          <h1 className="vagas-title">Employees</h1>
-          <p className="vagas-subtitle">
-            Below you can find a paginated list of employees (20 per page).
-          </p>
+          <h1 className="vagas-title">Applications</h1>
+          {jobTitle ? (
+            <p className="vagas-subtitle">
+              Candidates who applied for: <strong>{jobTitle}</strong>
+            </p>
+          ) : (
+            <p className="vagas-subtitle">
+              Candidates associated with the selected opening.
+            </p>
+          )}
+
+          {!loading && rowData.length === 0 && (
+            <p className="vagas-subtitle" style={{ marginTop: "0.25rem" }}>
+              No applications found for this opening.
+            </p>
+          )}
         </div>
+
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
+          className="vagas-create-btn"
+        >
+          ← Back to openings
+        </button>
       </div>
 
       <div className="vagas-card">

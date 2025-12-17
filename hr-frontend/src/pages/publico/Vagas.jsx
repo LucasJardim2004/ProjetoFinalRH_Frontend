@@ -18,14 +18,15 @@ import { getOpenings, deleteOpening } from "../../services/apiClient";
 
 const ApplyCellRenderer = (props) => {
   const navigate = useNavigate();
-  const { data, onDelete } = props; 
+  const { data, onDelete } = props;
 
   const handleApply = () => {
-    navigate("/candidatura", { 
-      state: { 
+    navigate("/candidatura", {
+      state: {
         jobTitle: data.jobTitle,
         openingID: data.openingID,
-      } });
+      },
+    });
   };
 
   const handleEdit = () => {
@@ -44,7 +45,22 @@ const ApplyCellRenderer = (props) => {
       alert("Could not detect opening ID for this row.");
       return;
     }
-    onDelete(data.openingID); 
+    onDelete(data.openingID);
+  };
+
+  const handleSeeCandidates = () => {
+    if (!data.openingID) {
+      console.error("No openingID on row:", data);
+      alert("Could not detect opening ID for this row.");
+      return;
+    }
+
+    navigate("/rh/listaCandidaturas", {
+      state: {
+        openingID: data.openingID,
+        jobTitle: data.jobTitle,
+      },
+    });
   };
 
   return (
@@ -54,19 +70,27 @@ const ApplyCellRenderer = (props) => {
         className="vagas-icon-btn"
         title="Edit opening"
         onClick={handleEdit}
-        className="vagas-icon-btn"
       >
         ✏️
       </button>
+
       <button
         type="button"
         className="vagas-icon-btn vagas-icon-btn-danger"
         title="Delete opening"
         onClick={handleDeleteClick}
-        className="vagas-icon-btn vagas-icon-btn-danger"
       >
         🗑️
       </button>
+
+      <button
+        type="button"
+        onClick={handleSeeCandidates}
+        className="button-9 vagas-see-candidates-btn"
+      >
+        See candidates
+      </button>
+
       <button type="button" onClick={handleApply} className="button-9">
         Apply
       </button>
@@ -134,11 +158,11 @@ function Vagas() {
     { field: "dateCreated", headerName: "Date Created" },
     {
       headerName: "Actions",
-      cellRenderer: ApplyCellRenderer, 
+      cellRenderer: ApplyCellRenderer,
       cellRendererParams: {
-        onDelete: handleDeleteOpening, 
+        onDelete: handleDeleteOpening,
       },
-      flex: 1.5,
+      flex: 2,
     },
   ]);
 
