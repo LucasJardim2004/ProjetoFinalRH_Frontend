@@ -5,6 +5,7 @@ import "./candidatura.css";
 import {
   createCandidateInfo,
   createJobCandidate,
+  uploadCandidateCv,
 } from "../../services/apiClient";
 
 function Candidatura() {
@@ -18,23 +19,6 @@ function Candidatura() {
   function handleFileChange(e) {
     const file = e.target.files && e.target.files[0];
     setCvName(file ? file.name : "No file selected");
-  }
-
-  function fileToBase64(file) {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const result = reader.result;
-        if (typeof result === "string") {
-          const base64 = result.split(",")[1] || result;
-          resolve(base64);
-        } else {
-          reject(new Error("Unexpected file reader result"));
-        }
-      };
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
   }
 
   async function handleSubmit(e) {
@@ -79,18 +63,18 @@ function Candidatura() {
           ? nameParts.slice(1, nameParts.length - 1).join(" ")
           : "";
 
-      const cvBase64 = await fileToBase64(cvFile);
+      // 1) Upload do CV para o backend, com nome baseado no National ID
+      const uploadResult = await uploadCandidateCv(cvFile, nationalID);
+      const resumeFileName = uploadResult.fileName; // ex: "12345678.pdf"
 
-      // 1) Criar JobCandidate (guarda o CV)
+      // 2) Criar JobCandidate (guarda o nome do ficheiro na BD)
       const jobCandidatePayload = {
-        businessEntityID: null, 
-        resume: null,
-        resumeFile: cvBase64,
+        businessEntityID: null, // candidato ainda não é employee
+        resume: null,           // não estamos a usar o XML de resume
+        resumeFile: resumeFileName,
       };
 
-      const createdJobCandidate = await createJobCandidate(
-        jobCandidatePayload
-      );
+      const createdJobCandidate = await createJobCandidate(jobCandidatePayload);
 
       const jobCandidateID =
         createdJobCandidate?.jobCandidateID ??
@@ -102,7 +86,7 @@ function Candidatura() {
         );
       }
 
-      // 2) Criar CandidateInfo (dados pessoais + ligação à vaga + JobCandidateID)
+      // 3) Criar CandidateInfo (dados pessoais + ligação à vaga + JobCandidateID)
       const candidateInfoPayload = {
         jobCandidateID, 
         openingID: openingIDFromState, 

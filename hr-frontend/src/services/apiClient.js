@@ -200,6 +200,30 @@ export function createJobCandidate(candidateDto) {
   });
 }
 
+// UPLOAD CV for JobCandidate (multipart/form-data)
+export async function uploadCandidateCv(file, nationalId) {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("nationalId", nationalId);
+
+  const response = await fetch(`${API_BASE_URL}/JobCandidate/upload-cv`, {
+    method: "POST",
+    body: formData,
+  });
+
+  if (!response.ok) {
+    let errorText;
+    try {
+      errorText = await response.text();
+    } catch {
+      errorText = "Unknown error";
+    }
+    throw new Error(`CV upload error (${response.status}): ${errorText}`);
+  }
+
+  return response.json(); // { fileName: "12345678.pdf" }
+}
+
 // PATCH /api/v1/JobCandidate/{id}
 // Expects a JobCandidate-like object in the body,
 // including JobCandidateID to satisfy backend validation.
