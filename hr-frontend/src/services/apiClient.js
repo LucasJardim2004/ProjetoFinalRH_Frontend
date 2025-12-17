@@ -126,6 +126,11 @@ export function getCandidateInfo(id) {
   return apiFetch(`/CandidateInfo/${id}`);
 }
 
+// GET /api/v1/CandidateInfo/by-opening/{openingId}
+export function getCandidateInfosByOpening(openingId){
+  return apiFetch(`/CandidateInfo/by-opening${openingId}`);
+}
+
 // POST /api/v1/CandidateInfo
 // Expects a CandidateInfoDTO-like object:
 // {
