@@ -26,6 +26,8 @@ function Candidatura() {
     setSubmitting(true);
 
     try {
+      console.log("[Candidatura] start submit");
+
       if (!openingIDFromState) {
         alert(
           "No opening ID associated with this application. Please start the application from the job openings page."
@@ -35,8 +37,7 @@ function Candidatura() {
 
       const formData = new FormData(e.target);
 
-      const jobTitle =
-        jobTitleFromState || formData.get("jobTitle") || "";
+      const jobTitle = jobTitleFromState || formData.get("jobTitle") || "";
       const fullName = (formData.get("nome") || "").toString().trim();
       const email = (formData.get("email") || "").toString().trim();
       const phoneNumber = (formData.get("telefone") || "").toString().trim();
@@ -48,6 +49,19 @@ function Candidatura() {
       const comment = (formData.get("comentarios") || "").toString().trim();
 
       const cvFile = formData.get("cv");
+
+      console.log("[Candidatura] form values", {
+        jobTitle,
+        fullName,
+        email,
+        phoneNumber,
+        birthDateRaw,
+        nationalID,
+        maritalStatus,
+        gender,
+        comment,
+        cvFile,
+      });
 
       if (!(cvFile instanceof File)) {
         alert("Please upload a valid CV file.");
@@ -63,18 +77,20 @@ function Candidatura() {
           ? nameParts.slice(1, nameParts.length - 1).join(" ")
           : "";
 
-      // 1) Upload do CV para o backend, com nome baseado no National ID
+      console.log("[Candidatura] before uploadCandidateCv");
       const uploadResult = await uploadCandidateCv(cvFile, nationalID);
-      const resumeFileName = uploadResult.fileName; // ex: "12345678.pdf"
+      console.log("[Candidatura] uploadResult", uploadResult);
 
-      // 2) Criar JobCandidate (guarda o nome do ficheiro na BD)
+      const resumeFileName = uploadResult.fileName;
+
+      console.log("[Candidatura] before createJobCandidate");
       const jobCandidatePayload = {
-        businessEntityID: null, // candidato ainda não é employee
-        resume: null,           // não estamos a usar o XML de resume
+        businessEntityID: null,
+        resume: null,
         resumeFile: resumeFileName,
       };
-
       const createdJobCandidate = await createJobCandidate(jobCandidatePayload);
+      console.log("[Candidatura] createdJobCandidate", createdJobCandidate);
 
       const jobCandidateID =
         createdJobCandidate?.jobCandidateID ??
@@ -86,10 +102,10 @@ function Candidatura() {
         );
       }
 
-      // 3) Criar CandidateInfo (dados pessoais + ligação à vaga + JobCandidateID)
+      console.log("[Candidatura] before createCandidateInfo");
       const candidateInfoPayload = {
-        jobCandidateID, 
-        openingID: openingIDFromState, 
+        jobCandidateID,
+        openingID: openingIDFromState,
         jobTitle,
         nationalID,
         birthDate: birthDateRaw
@@ -105,7 +121,8 @@ function Candidatura() {
         comment,
       };
 
-      await createCandidateInfo(candidateInfoPayload);
+      const createdCandidateInfo = await createCandidateInfo(candidateInfoPayload);
+      console.log("[Candidatura] createdCandidateInfo", createdCandidateInfo);
 
       alert("Application submitted successfully!");
 
@@ -113,11 +130,10 @@ function Candidatura() {
       setCvName("No file selected");
     } catch (err) {
       console.error("Error submitting application:", err);
-      alert("There was an error submitting your application.");
+      alert(err.message || "There was an error submitting your application.");
     } finally {
       setSubmitting(false);
     }
-  }
 
   return (
     <div className="candidatura-page">
