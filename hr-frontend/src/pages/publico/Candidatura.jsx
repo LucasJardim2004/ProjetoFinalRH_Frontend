@@ -134,6 +134,7 @@ function Candidatura() {
     } finally {
       setSubmitting(false);
     }
+  }
 
   return (
     <div className="candidatura-page">
@@ -250,8 +251,8 @@ function Candidatura() {
                   <option value="" disabled>
                     Select an option...
                   </option>
-                  <option value="single">Single</option>
-                  <option value="married">Married</option>
+                  <option value="S">Single</option>
+                  <option value="M">Married</option>
                 </select>
               </div>
 
@@ -263,12 +264,8 @@ function Candidatura() {
                   <option value="" disabled>
                     Select an option...
                   </option>
-                  <option value="female">Female</option>
-                  <option value="male">Male</option>
-                  <option value="other">Other</option>
-                  <option value="prefer_not_to_say">
-                    Prefer not to say
-                  </option>
+                  <option value="F">Female</option>
+                  <option value="M">Male</option>
                 </select>
               </div>
             </div>
