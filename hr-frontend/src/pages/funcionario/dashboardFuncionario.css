@@ -1,0 +1,35 @@
+
+.employee-details-section {
+  margin-top: 16px;
+}
+
+.section-title {
+  margin-bottom: 8px;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.employee-details-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 8px;
+}
+
+.detail-item .label {
+  font-size: 0.8rem;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.detail-item .value {
+  font-weight: 600;
+}

@@ -34,7 +34,9 @@ function ListaCandidaturas() {
       }
 
       try {
+        console.log("ASDFGH");
         const candidates = await getCandidateInfosByOpening(openingID);
+        console.log("Candidates" + candidates);
 
         const mapped = (candidates || []).map((c) => ({
           id: c.id ?? c.ID,

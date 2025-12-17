@@ -80,11 +80,6 @@ export function getEmployees() {
   return apiFetch("/Employee");
 }
 
-// GET /api/v1/Employee/{id}
-export function getEmployee(id) {
-  return apiFetch(`/Employee/${id}`);
-}
-
 // POST /api/v1/Employee
 // Expects an EmployeeWithPersonDTO-like object:
 // {
@@ -128,7 +123,7 @@ export function getCandidateInfo(id) {
 
 // GET /api/v1/CandidateInfo/by-opening/{openingId}
 export function getCandidateInfosByOpening(openingId){
-  return apiFetch(`/CandidateInfo/by-opening${openingId}`);
+  return apiFetch(`/CandidateInfo/by-opening/${openingId}`);
 }
 
 // POST /api/v1/CandidateInfo
@@ -244,4 +239,259 @@ export function deleteJobCandidate(id) {
   return apiFetch(`/JobCandidate/${id}`, {
     method: "DELETE",
   });
+}
+
+
+/**
+ * Employee
+ * Controller: EmployeeControler
+ * Route base: api/v1/Employee
+ */
+export async function getEmployee(id) {
+  const data = await apiFetch(`/Employee/${id}`);
+ 
+  const employeeCore =
+    data?.Employee ??
+    data?.employee ??
+    {};
+ 
+  const phoneNumber =
+    data?.PhoneNumber ??
+    data?.phoneNumber ??
+    null;
+ 
+  const emailAddress =
+    data?.EmailAddress ??
+    data?.emailAddress ??
+    null;
+ 
+  // Read histories from either the top level OR inside Employee
+  const departmentHistoriesRaw =
+    data?.EmployeeDepartmentHistories ??
+    data?.employeeDepartmentHistories ??
+    employeeCore?.EmployeeDepartmentHistories ??
+    employeeCore?.employeeDepartmentHistories ??
+    [];
+ 
+  const payHistoriesRaw =
+    data?.EmployeePayHistories ??
+    data?.employeePayHistories ??
+    employeeCore?.EmployeePayHistories ??
+    employeeCore?.employeePayHistories ??
+    [];
+ 
+  const employeeDepartmentHistories = departmentHistoriesRaw.map(normalizeDeptHistory);
+  const employeePayHistories = payHistoriesRaw.map(normalizePayHistory);
+ 
+  return normalizeEmployee(employeeCore, {
+    phoneNumber,
+    emailAddress,
+    employeeDepartmentHistories,
+    employeePayHistories,
+  });
+}
+
+
+/**
+ * Return a PARTIAL camelCase patch so we don't wipe unrelated fields.
+ */
+export async function patchEmployee(id, partialDto) {
+  const body = {
+    BusinessEntityID: Number(id),
+    ...partialDto,
+  };
+ 
+  const dto = await apiFetch(`/Employee/${id}`, {
+    method: "PATCH",
+    body,
+  });
+ 
+  // Build a partial result only for fields present in dto
+  const has = (k) => Object.prototype.hasOwnProperty.call(dto || {}, k);
+  const get = (...keys) => {
+    for (const k of keys) {
+      if (dto && dto[k] !== undefined) return dto[k];
+    }
+    return undefined;
+  };
+ 
+  const result = {};
+  if (has("BusinessEntityID") || has("businessEntityID")) {
+    result.businessEntityID = Number(get("BusinessEntityID", "businessEntityID"));
+  }
+  if (has("JobTitle") || has("jobTitle")) {
+    result.jobTitle = get("JobTitle", "jobTitle");
+  }
+  if (has("Gender") || has("gender")) {
+    result.gender = get("Gender", "gender");
+  }
+  if (has("MaritalStatus") || has("maritalStatus")) {
+    result.maritalStatus = get("MaritalStatus", "maritalStatus");
+  }
+  if (has("BirthDate") || has("birthDate")) {
+    result.birthDate = get("BirthDate", "birthDate");
+  }
+  if (has("HireDate") || has("hireDate")) {
+    result.hireDate = get("HireDate", "hireDate");
+  }
+  // Note: we intentionally DO NOT include histories here to avoid wiping them.
+ 
+  return result;
+}
+
+
+/**
+ * PersonEmailAddress
+ * Controller: PersonEmailAddressController
+ * Route base: api/v1/PersonEmailAddress
+ */ 
+export async function patchEmail(id, emailAddress) {
+  const body = {
+    BusinessEntityID: Number(id),
+    EmailAddress: emailAddress,
+  };
+  const dto = await apiFetch(`/PersonEmailAddress/${id}`, {
+    method: "PATCH",
+    body,
+  });
+  // Return a small object with the updated email casing
+  const email =
+    dto?.EmailAddress ??
+    dto?.emailAddress ??
+    emailAddress ??
+    null;
+  return { EmailAddress: email };
+}
+ 
+
+/**
+ * EmployeeDepartmentHistory
+ * Controller: EmployeeDepartmentHistoryController
+ * Route base: api/v1/EmployeeDepartmentHistory
+ */ 
+export async function patchDepartmentHistoryEndDate(id, startDateOrRow, endDateYmd) {
+  if (!endDateYmd) {
+    throw new Error("EndDate cannot be empty.");
+  }
+ 
+  const encodedStart = encodeDateKeyForRoute(startDateOrRow);
+ 
+  const body = {
+    BusinessEntityID: Number(id),
+    EndDate: endDateYmd, // date-only; server parses DateTime
+  };
+ 
+  const dto = await apiFetch(`/EmployeeDepartmentHistory/${id}_${encodedStart}`, {
+    method: "PATCH",
+    body,
+  });
+ 
+  return {
+       departmentID: dto?.DepartmentID ?? dto?.departmentID,
+    startDate: dto?.StartDate ?? dto?.startDate,
+    endDate: dto?.EndDate ?? dto?.endDate ?? endDateYmd,
+  };
+}
+ 
+export async function createDepartmentHistory(businessEntityID, departmentID, startDateYmd) {
+  if (!businessEntityID) throw new Error("BusinessEntityID is required.");
+  if (!Number.isInteger(departmentID) || departmentID < 1 || departmentID > 16) {
+    throw new Error("DepartmentID must be an integer between 1 and 16.");
+  }
+ 
+  const body = {
+    BusinessEntityID: Number(businessEntityID),
+    DepartmentID: Number(departmentID),
+    // If you want to let server default to now, omit StartDate below
+    ...(startDateYmd ? { StartDate: startDateYmd } : {}),
+    EndDate: null,
+  };
+ 
+  const dto = await apiFetch(`/EmployeeDepartmentHistory`, {
+    method: "POST",
+    body,
+  });
+ 
+  // Normalize to camelCase to match UI expectations
+  return {
+    departmentID: dto?.DepartmentID ?? dto?.departmentID ?? departmentID,
+    startDate: dto?.StartDate ?? dto?.startDate ?? startDateYmd ?? new Date().toISOString(),
+    endDate
+  }
+}
+ 
+ 
+/**
+ * EmployeePayHistory
+ * Controller: EmployeePayHistoryController
+ * Route base: api/v1/EmployeePayHistory
+ */ 
+export async function createPayHistory(businessEntityID, rate, payFrequency) {
+  if (!businessEntityID) throw new Error("BusinessEntityID is required.");
+  if (typeof rate !== "number" || !isFinite(rate) || rate <= 0) {
+    throw new Error("Rate must be a positive number.");
+  }
+  if (![1, 2].includes(Number(payFrequency))) {
+    throw new Error("PayFrequency must be 1 (Monthly) or 2 (Biweekly).");
+  }
+ 
+  const body = {
+    BusinessEntityID: Number(businessEntityID),
+    Rate: Number(rate),
+    PayFrequency: Number(payFrequency),
+    // RateChangeDate omitted so server defaults to now
+  };
+ 
+  const dto = await apiFetch(`/EmployeePayHistory`, {
+    method: "POST",
+    body,
+  });
+ 
+  // Normalize to camelCase for UI
+  return {
+    rateChangeDate: dto?.RateChangeDate ?? dto?.rateChangeDate ?? new Date().toISOString(),
+    rate: dto?.Rate ?? dto?.rate ?? rate,
+    payFrequency: dto?.PayFrequency ?? dto?.payFrequency ?? payFrequency,
+  };
+}
+
+function normalizeDeptHistory(item = {}) {
+  return {
+    departmentID: item.DepartmentID ?? item.departmentID,
+    startDate: item.StartDate ?? item.startDate,
+    endDate: item.EndDate ?? item.endDate ?? null,
+  };
+}
+ 
+function normalizePayHistory(item = {}) {
+  return {
+    rateChangeDate: item.RateChangeDate ?? item.rateChangeDate,
+    rate: item.Rate ?? item.rate,
+    payFrequency: item.PayFrequency ?? item.payFrequency,
+  };
+}
+ 
+function normalizeEmployee(obj = {}, extras = {}) {
+  const e = obj || {};
+  return {
+    businessEntityID: e.BusinessEntityID ?? e.businessEntityID ?? extras.businessEntityID,
+    nationalIDNumber: e.NationalIDNumber ?? e.nationalIDNumber ?? extras.nationalIDNumber,
+    jobTitle: e.JobTitle ?? e.jobTitle ?? extras.jobTitle,
+    gender: e.Gender ?? e.gender ?? extras.gender,
+    maritalStatus: e.MaritalStatus ?? e.maritalStatus ?? extras.maritalStatus,
+    birthDate: e.BirthDate ?? e.birthDate ?? extras.birthDate,
+    hireDate: e.HireDate ?? e.hireDate ?? extras.hireDate,
+    phoneNumber: extras.phoneNumber ?? e.PhoneNumber ?? e.phoneNumber ?? null,
+    emailAddress: extras.emailAddress ?? e.EmailAddress ?? e.emailAddress ?? null,
+    employeeDepartmentHistories:
+      extras.employeeDepartmentHistories ??
+      e.EmployeeDepartmentHistories ??
+      e.employeeDepartmentHistories ??
+      [],
+    employeePayHistories:
+      extras.employeePayHistories ??
+      e.EmployeePayHistories ??
+      e.employeePayHistories ??
+      [],
+  };
 }
