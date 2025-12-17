@@ -21,7 +21,11 @@ const ApplyCellRenderer = (props) => {
   const { data, onDelete } = props; 
 
   const handleApply = () => {
-    navigate("/candidatura", { state: { jobTitle: data.jobTitle } });
+    navigate("/candidatura", { 
+      state: { 
+        jobTitle: data.jobTitle,
+        openingID: data.openingID,
+      } });
   };
 
   const handleEdit = () => {
