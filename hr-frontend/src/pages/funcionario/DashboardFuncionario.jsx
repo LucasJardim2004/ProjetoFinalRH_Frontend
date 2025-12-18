@@ -1,5 +1,3 @@
-
-// src/pages/funcionario/DashboardFuncionario.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Header from "../../components/layout/Header";
@@ -11,18 +9,15 @@ import {
   createDepartmentHistory,
   createPayHistory,
 } from "../../services/apiClient";
+
 import "./dashboardFuncionario.css";
 
-// Base AG Grid CSS (required)
 import "ag-grid-community/styles/ag-grid.css";
 
 import { useAuth } from "/src/AuthProvider.jsx";
 
-// ========================
-// AG Grid (Theming API)
-// ========================
 import { ModuleRegistry, AllCommunityModule, themeQuartz } from "ag-grid-community";
-ModuleRegistry.registerModules([AllCommunityModule]); // keep your approach
+ModuleRegistry.registerModules([AllCommunityModule]); 
 import { AgGridReact } from "ag-grid-react";
 
 const myTheme = themeQuartz.withParams({
@@ -30,10 +25,6 @@ const myTheme = themeQuartz.withParams({
   headerTextColor: "#333",
   accentColor: "#0E74A1",
 });
-
-/* ========================
-   Helpers
-   ======================== */
 
 const DISPLAY_LOCALE = "pt-PT";
 
@@ -101,14 +92,11 @@ function EditIconButton({ onClick, title = "Edit" }) {
   );
 }
 
-/* ========================
-   Inline EditableField
-   ======================== */
 function EditableField({
   label,
   value,
   renderValue,
-  type = "text", // "text" | "date" | "select"
+  type = "text", 
   options = [],
   onSave,
   disabled = false,
@@ -241,9 +229,6 @@ function EditableField({
   );
 }
 
-/* ========================
-   Dept EndDate cell renderer
-   ======================== */
 function DeptEndDateCellRenderer(props) {
   const { value, data, onSaveEndDate, api } = props;
 
@@ -362,9 +347,6 @@ function DeptEndDateCellRenderer(props) {
   );
 }
 
-/* ========================
-   Add Department Movement Modal
-   ======================== */
 function AddDeptMovementModal({
   isOpen,
   onClose,
@@ -452,13 +434,10 @@ function AddDeptMovementModal({
   );
 }
 
-/* ========================
-   Add Pay History Modal (Rate + Frequency only)
-   ======================== */
 function AddPayHistoryModal({
   isOpen,
   onClose,
-  onConfirm, // (rate:number, payFrequency:number) => Promise<void>
+  onConfirm, 
 }) {
   const [rate, setRate] = React.useState("");
   const [payFreq, setPayFreq] = React.useState("1"); // 1=Monthly, 2=Biweekly
@@ -492,7 +471,7 @@ function AddPayHistoryModal({
     try {
       setSaving(true);
       await onConfirm(Number(rate), Number(payFreq));
-      onClose(); // close on success
+      onClose(); 
     } catch (err) {
       setError(err?.message || "Failed to add pay history.");
     } finally {
@@ -557,10 +536,6 @@ function AddPayHistoryModal({
   );
 }
 
-/* ========================
-   Main page
-   ======================== */
-
 const GENDER_OPTS = [
   { value: "M", label: "Male" },
   { value: "F", label: "Female" },
@@ -570,6 +545,10 @@ const MARITAL_OPTS = [
   { value: "S", label: "Single" },
 ];
 
+
+
+
+/* FUNÇÃO DASHBOARD */
 export default function DashboardFuncionario() {
   const { businessEntityID } = useParams();
   const navigate = useNavigate();
@@ -580,17 +559,33 @@ export default function DashboardFuncionario() {
 
   const [showAddDeptModal, setShowAddDeptModal] = useState(false);
   const [showAddPayModal, setShowAddPayModal] = useState(false);
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
 
   console.log(user);
 
+  const roles = Array.isArray(user?.roles) ? user.roles : [];
+  const isHR = roles[0] === "HR";
+
+  const paramId = businessEntityID ? Number(businessEntityID) : null;
+  const ownId = user?.businessEntityID ? Number(user.businessEntityID) : null;
+
+  const effectiveId = isHR ? (paramId || ownId) : ownId;
+
+
   // Reload helper
   const reloadEmployee = React.useCallback(async () => {
-    const employee = await getEmployee(Number(user.businessEntityID ?? 1));
+    if (!effectiveId){
+      throw new Error("Erro");
+    }
+    const employee = await getEmployee(effectiveId);
     setEmp(employee);
-  }, [businessEntityID]);
+  }, [effectiveId]);
 
   useEffect(() => {
+    if (authLoading){
+      setLoading(true);
+      return;
+    }
     (async function run() {
       try {
         setLoading(true);
@@ -602,9 +597,8 @@ export default function DashboardFuncionario() {
         setLoading(false);
       }
     })();
-  }, [reloadEmployee]);
+  }, [authLoading, reloadEmployee]);
 
-  /* Save handlers (PATCH) */
   async function saveJobTitle(newValue) {
     const updated = await patchEmployee(emp.businessEntityID, {
       JobTitle: newValue?.trim() || null,
@@ -828,7 +822,7 @@ export default function DashboardFuncionario() {
         onClose={() => setShowAddDeptModal(false)}
         onConfirm={handleAddDepartmentMovement}
         defaultStartDate={new Date()}
-        existing        existingRows={emp?.employeeDepartmentHistories ?? []}
+        existingRows={emp?.employeeDepartmentHistories ?? []}
       />
 
       <AddPayHistoryModal
