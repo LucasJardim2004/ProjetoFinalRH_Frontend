@@ -11,27 +11,18 @@ import Vagas from "../pages/publico/Vagas.jsx";
 
 // Páginas de funcionário
 import DashboardFuncionario from "../pages/funcionario/DashboardFuncionario.jsx";
-// import PerfilFuncionario from "../pages/funcionario/PerfilFuncionario.jsx";
-// import PagamentosFuncionario from "../pages/funcionario/PagamentosFuncionario.jsx";
-// import MovimentacoesFuncionario from "../pages/funcionario/MovimentacoesFuncionario.jsx";
 // import Notificacoes from "../pages/comuns/Notificacoes.jsx";
 
 // Páginas RH
 import CriarVaga from "../pages/rh/CriarVaga.jsx";
 import EditarVaga from "../pages/rh/EditarVaga.jsx";
-// import DashboardRh from "../pages/rh/DashboardRh.jsx";
 import ListaFuncionarios from "../pages/rh/ListaFuncionarios.jsx";
-// import ColaboradorDetalhe from "../pages/rh/ColaboradorDetalhe.jsx";
-// import GestaoPagamentosMov from "../pages/rh/GestaoPagamentosMov.jsx";
 import ListaCandidaturas from "../pages/rh/ListaCandidaturas.jsx";
-// import CandidatoDetalhe from "../pages/rh/CandidatoDetalhe.jsx";
+import { use } from "react";
 // import LogsRh from "../pages/rh/LogsRh.jsx";
 
 function AppRoutes() {
-
-
-  // const { user, loading } = AuthProvider();  // Por agora “forçamos” um role para ver o layout a funcionar
-  const fakeRole = "funcionario"; // ou "rh"
+  const { user, loading } = AuthProvider(); 
 
   return (
     <AuthProvider>
@@ -43,24 +34,27 @@ function AppRoutes() {
           <Route path="/candidatura" element={<Candidatura />} />
 
           <Route element={<AuthGuard />}>
-            <Route
-              path= "/funcionario/:businessEntityID"  element={<DashboardFuncionario />}/>
-            <Route path="/rh/criarVaga" element={<CriarVaga />} />
-            <Route path="/rh/editarVaga" element={<EditarVaga />} />
-            <Route
-              path="/rh/listaFuncionarios"
-              element={<ListaFuncionarios />}
-            />
-            <Route
-              path="/rh/listaCandidaturas"
-              element={<ListaCandidaturas />}
-            />
+              <Route
+                path= "/funcionario/:businessEntityID"  
+                element={<DashboardFuncionario />}
+              />
 
-            {/* Área interna COM header + sidebar */}
-            <Route path="/" element={<AppLayout role={fakeRole} />}>
-              {/* Página inicial: dashboard do funcionário */}
-              <Route index element={<DashboardFuncionario />} />
-            </Route>
+              {/* Área interna COM header + sidebar */}
+              <Route path="/" element={<AppLayout role={user.role} />}>
+                {/* Página inicial: dashboard do funcionário */}
+                  <Route index element={<DashboardFuncionario />} />
+                 
+                  <Route path="/rh/criarVaga" element={<CriarVaga />} />
+                  <Route path="/rh/editarVaga" element={<EditarVaga />} />
+                  <Route
+                    path="/rh/listaFuncionarios"
+                    element={<ListaFuncionarios />}
+                  />
+                  <Route
+                    path="/rh/listaCandidaturas"
+                    element={<ListaCandidaturas />}
+                  />
+              </Route>
           </Route>
         </Routes>
       </BrowserRouter>
