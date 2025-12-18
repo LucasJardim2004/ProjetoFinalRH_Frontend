@@ -15,6 +15,35 @@ import "ag-grid-community/styles/ag-theme-quartz.css";
 import "./ListaCandidaturas.css";
 
 import { getCandidateInfosByOpening } from "../../services/apiClient";
+/*adicionei*/
+function DetalhesButtonRenderer(props) {
+  const navigate = useNavigate();
+
+  const handleClick = () => {
+    navigate(`/rh/candidaturas/${props.data.jobCandidateID}`, {
+      state: {
+        candidate: props.data,
+      },
+    });
+  };
+
+  return (
+    <button
+      onClick={handleClick}
+      style={{
+        padding: "4px 10px",
+        fontSize: "0.85rem",
+        borderRadius: "4px",
+        border: "none",
+        cursor: "pointer",
+        backgroundColor: "#2563eb",
+        color: "#fff",
+      }}
+    >
+      Detalhes
+    </button>
+  );
+}
 
 function ListaCandidaturas() {
   const [rowData, setRowData] = useState([]);
@@ -97,6 +126,15 @@ function ListaCandidaturas() {
       headerName: "Birth Date",
       maxWidth: 140,
     },
+    /*adicionei*/ 
+    {
+      headerName: "Actions",
+      width: 140,              // IMPORTANT (see point 2)
+      cellRenderer: DetalhesButtonRenderer,
+      sortable: false,
+      filter: false,
+      flex: 0.6
+    }
   ]);
 
   return (

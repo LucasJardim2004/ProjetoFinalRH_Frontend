@@ -19,6 +19,7 @@ import CriarVaga from "../pages/rh/CriarVaga.jsx";
 import EditarVaga from "../pages/rh/EditarVaga.jsx";
 import ListaFuncionarios from "../pages/rh/ListaFuncionarios.jsx";
 import ListaCandidaturas from "../pages/rh/ListaCandidaturas.jsx";
+import DetalhesCandidatura from "../pages/rh/DetalhesCandidatura.jsx";
 
 function AppRoutes() {
   return (
@@ -53,6 +54,10 @@ function AppRoutes() {
               <Route
                 path="/rh/listaCandidaturas"
                 element={<ListaCandidaturas />}
+              />
+              <Route
+                path="rh/candidaturas/:jobCandidateID"
+                element={<DetalhesCandidatura />}
               />
             </Route>
           </Route>
