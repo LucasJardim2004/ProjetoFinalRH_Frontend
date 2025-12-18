@@ -73,11 +73,6 @@ function ListaCandidaturas() {
 
   const [colDefs] = useState([
     {
-      field: "jobCandidateID",
-      headerName: "Candidate ID",
-      maxWidth: 140,
-    },
-    {
       field: "fullName",
       headerName: "Name",
       flex: 1.4,

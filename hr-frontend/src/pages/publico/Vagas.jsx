@@ -70,29 +70,39 @@ const ApplyCellRenderer = (props) => {
   return (
     <div className="vagas-actions-cell">
       {user?.roles?.[0] === "HR" && (
-      <button
-        type="button"
-        className="vagas-icon-btn"
-        title="Edit opening"
-        onClick={handleEdit}
-      >
-        ✏️
-      </button>
+        <button
+          type="button"
+          className="vagas-icon-btn"
+          title="Edit opening"
+          onClick={handleEdit}
+        >
+          ✏️
+        </button>
       )}
       {user?.roles?.[0] === "HR" && (
-      <button
-        type="button"
-        className="vagas-icon-btn vagas-icon-btn-danger"
-        title="Delete opening"
-        onClick={handleDeleteClick}
-      >
-        🗑️
-      </button>
+        <button
+          type="button"
+          className="vagas-icon-btn vagas-icon-btn-danger"
+          title="Delete opening"
+          onClick={handleDeleteClick}
+        >
+          🗑️
+        </button>
       )}
-      
-      <button type="button" onClick={handleApply} className="button-9">
-        Apply
-      </button>
+      {user?.roles?.[0] === "HR" && (
+        <button
+          type="button"
+          onClick={handleSeeCandidates}
+          className="button-9 vagas-see-candidates-btn"
+        >
+          See candidates
+        </button>
+      )}
+      {user?.roles?.[0] != "HR" && (
+        <button type="button" onClick={handleApply} className="button-9">
+          Apply
+        </button>
+      )}
     </div>
   );
 };

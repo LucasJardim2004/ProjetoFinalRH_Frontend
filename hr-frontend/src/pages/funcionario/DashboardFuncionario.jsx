@@ -571,7 +571,6 @@ export default function DashboardFuncionario() {
 
   const effectiveId = isHR ? (paramId || ownId) : ownId;
 
-
   // Reload helper
   const reloadEmployee = React.useCallback(async () => {
     if (!effectiveId){
