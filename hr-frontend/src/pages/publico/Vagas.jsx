@@ -16,9 +16,13 @@ import "./vagas.css";
 
 import { getOpenings, deleteOpening } from "../../services/apiClient";
 
+import { useAuth } from "../../AuthProvider.jsx"
+
 const ApplyCellRenderer = (props) => {
   const navigate = useNavigate();
   const { data, onDelete } = props;
+
+  const { user, loading } = useAuth();
 
   const handleApply = () => {
     navigate("/candidatura", {
@@ -65,6 +69,7 @@ const ApplyCellRenderer = (props) => {
 
   return (
     <div className="vagas-actions-cell">
+      {user?.roles?.[0] === "HR" && (
       <button
         type="button"
         className="vagas-icon-btn"
@@ -73,7 +78,8 @@ const ApplyCellRenderer = (props) => {
       >
         ✏️
       </button>
-
+      )}
+      {user?.roles?.[0] === "HR" && (
       <button
         type="button"
         className="vagas-icon-btn vagas-icon-btn-danger"
@@ -82,15 +88,8 @@ const ApplyCellRenderer = (props) => {
       >
         🗑️
       </button>
-
-      <button
-        type="button"
-        onClick={handleSeeCandidates}
-        className="button-9 vagas-see-candidates-btn"
-      >
-        See candidates
-      </button>
-
+      )}
+      
       <button type="button" onClick={handleApply} className="button-9">
         Apply
       </button>
@@ -101,6 +100,7 @@ const ApplyCellRenderer = (props) => {
 function Vagas() {
   const [rowData, setRowData] = useState([]);
   const navigate = useNavigate();
+  const { user, loading } = useAuth();
 
   function handleGoToCreateOpening() {
     navigate("/rh/criarVaga");
@@ -130,6 +130,7 @@ function Vagas() {
     async function loadOpenings() {
       try {
         const openings = await getOpenings();
+
         const mapped = openings.map((o) => ({
           openingID: o.openingID,
           jobTitle: o.jobTitle,
@@ -137,11 +138,14 @@ function Vagas() {
           dateCreated: o.dateCreated?.slice(0, 10),
           openFlag: o.openFlag,
         }));
+
         setRowData(mapped);
+
       } catch (err) {
         console.error("Error loading openings", err);
       }
     }
+
     loadOpenings();
   }, []);
 
@@ -177,6 +181,7 @@ function Vagas() {
           </p>
         </div>
 
+        {user?.roles?.[0] === "HR" && (
         <button
           type="button"
           onClick={handleGoToCreateOpening}
@@ -184,6 +189,7 @@ function Vagas() {
         >
           + Create opening
         </button>
+        )}
       </div>
 
       <div className="vagas-card">
@@ -195,6 +201,8 @@ function Vagas() {
             animateRows={true}
             rowHeight={40}
             headerHeight={40}
+            pagination={true}
+            paginationPageSize={20}
           />
         </div>
       </div>
