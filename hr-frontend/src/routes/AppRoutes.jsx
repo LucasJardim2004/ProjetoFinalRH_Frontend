@@ -33,7 +33,7 @@ function AppRoutes() {
           {/* Rotas autenticadas */}
           <Route element={<RequireAuth />}>
             <Route element={<AppLayout />}>
-              {/* Dashboard “minha” – funcionário ou RH */}
+              {/* Dashboard pessoal – funcionário ou RH */}
               <Route index element={<DashboardFuncionario />} />
 
               {/* Dashboard de um funcionário específico */}

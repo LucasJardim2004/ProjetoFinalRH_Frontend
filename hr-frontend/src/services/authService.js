@@ -1,5 +1,3 @@
-
-// authService.js
 const STORAGE_KEY = "rh.auth"; // onde guardamos tokens no localStorage
 
 function getState() {
@@ -28,8 +26,6 @@ export function setTokens({ accessToken, refreshToken }) {
     ...current,
     accessToken,
     refreshToken,
-    // opcional: guardar payload decodificado para UI
-    // user: decodeJwt(accessToken),
   });
 }
 
@@ -37,7 +33,6 @@ export function clearAuth() {
   localStorage.removeItem(STORAGE_KEY);
 }
 
-// Utilitário opcional: decodificar JWT (sem validar assinatura)
 export function decodeJwt(token) {
   try {
     const [, payload] = token.split(".");

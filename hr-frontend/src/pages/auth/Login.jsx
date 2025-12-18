@@ -1,5 +1,3 @@
-
-// /src/pages/auth/Login.jsx
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "/src/AuthProvider.jsx";
@@ -20,10 +18,8 @@ function Login() {
     setLoading(true);
 
     try {
-      // 1) login via provider → stores tokens + triggers user refresh
       await login(identifier, password);
 
-      // 2) redirect (e.g., to home/dashboard)
       navigate("/");
     } catch (err) {
       setError(err.message || "Falha no login");

@@ -10,7 +10,7 @@ function AppLayout() {
     <div className="app-shell">
       <Header user={user} loading={loading} />
       <div className="app-body">
-        {/* Sidebar só aparece se for RH (Sidebar já faz o filtro) */}
+        {/* Sidebar só aparece se for RH*/}
         <Sidebar user={user} loading={loading} />
 
         <main className="app-content">

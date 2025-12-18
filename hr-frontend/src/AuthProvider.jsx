@@ -1,5 +1,3 @@
-
-// /src/AuthProvider.jsx
 import { createContext, useContext, useEffect, useState } from "react";
 import {
   getAccessToken,
@@ -18,12 +16,10 @@ const AuthContext = createContext({
 });
 
 export default function AuthProvider({ children }) {
-  // Track the token explicitly so changes re-trigger user refresh
   const [token, setToken] = useState(() => getAccessToken());
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Refresh user whenever token changes
   useEffect(() => {
     let cancelled = false;
 
@@ -32,7 +28,6 @@ export default function AuthProvider({ children }) {
       try {
         const currentToken = getAccessToken();
 
-        // Keep token state aligned in case something else wrote it
         if (currentToken !== token) {
           setToken(currentToken || null);
         }
@@ -42,7 +37,7 @@ export default function AuthProvider({ children }) {
           return;
         }
 
-        const profile = await me(); // { sub, userName, fullName, businessEntityID, roles }
+        const profile = await me(); 
         if (!cancelled) setUser(profile);
       } catch (err) {
         console.error("[AuthProvider] me() failed:", err);
@@ -58,7 +53,6 @@ export default function AuthProvider({ children }) {
     };
   }, [token]);
 
-  // Sync across tabs/windows if localStorage changes
   useEffect(() => {
     function onStorage(e) {
       if (e.key === AUTH_STORAGE_KEY) {
@@ -69,14 +63,11 @@ export default function AuthProvider({ children }) {
     return () => window.removeEventListener("storage", onStorage);
   }, []);
 
-  // Expose login/logout through the provider to keep state consistent
   async function login(email, password) {
     try {
-      await apiLogin(email, password); // writes tokens to storage
-      // Update token state; effect above will fetch user
+      await apiLogin(email, password); 
       setToken(getAccessToken() || null);
     } catch (err) {
-      // Ensure UI doesn't get stuck in loading
       setLoading(false);
       throw err;
     }
@@ -84,7 +75,7 @@ export default function AuthProvider({ children }) {
 
   async function logout() {
     try {
-      await apiLogout(); // clears storage
+      await apiLogout(); 
     } finally {
       setToken(null);
       setUser(null);
