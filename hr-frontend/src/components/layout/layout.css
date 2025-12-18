@@ -1,55 +1,174 @@
+/* === APP SHELL (layout base) === */
+
 .app-shell {
   display: flex;
   flex-direction: column;
   height: 100vh;
+  background: #f3f4f6;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
-/* Header no topo */
+/* === HEADER (NAVBAR) === */
+
 .app-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0.75rem 1.5rem;
   border-bottom: 1px solid #e5e7eb;
-  background-color: #ffffff;
+  background: #ffffff;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+  position: sticky;
+  top: 0;
+  z-index: 20;
 }
 
-/* Corpo: sidebar + conteúdo */
+/* Logo / título da app */
+
+.app-header .logo {
+  font-weight: 700;
+  font-size: 1.1rem;
+  letter-spacing: 0.03em;
+  color: #0000ff;
+}
+
+/* Lado direito do header */
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* Info do utilizador */
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  background: #f3f4ff;
+  color: #111827;
+  font-size: 0.9rem;
+}
+
+.user-info .role-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #6366f1;
+}
+
+/* Botão de logout */
+
+.logout-link {
+  border: none;
+  border-radius: 999px;
+  padding: 0.45rem 0.95rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: linear-gradient(135deg, #4949ff 0%, #0000ff 100%);
+  color: #ffffff;
+  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.35);
+  transition: transform 0.08s ease, box-shadow 0.12s ease, opacity 0.1s ease;
+}
+
+.logout-link:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 26px rgba(37, 99, 235, 0.45);
+}
+
+.logout-link:active {
+  transform: translateY(0);
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.35);
+  opacity: 0.95;
+}
+
+/* === CORPO: SIDEBAR + CONTEÚDO === */
+
 .app-body {
   display: flex;
   flex: 1;
   min-height: 0;
 }
 
-/* Sidebar */
+/* === SIDEBAR (apenas RH) === */
+
 .app-sidebar {
-  width: 220px;
+  width: 230px;
   border-right: 1px solid #e5e7eb;
-  padding: 1rem;
-  background-color: #ffffff;
+  padding: 1.25rem 1rem;
+  background: #ffffff;
+  box-shadow: 6px 0 18px rgba(15, 23, 42, 0.03);
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
 }
 
 .app-sidebar nav {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.35rem;
 }
+
+/* Links da sidebar */
 
 .app-sidebar a {
   text-decoration: none;
   color: #374151;
-  font-size: 0.95rem;
+  font-size: 0.92rem;
+  font-weight: 500;
+  padding: 0.45rem 0.75rem;
+  border-radius: 0.5rem;
+  display: block;
+  transition: background-color 0.12s ease, color 0.12s ease,
+    transform 0.06s ease;
+}
+
+.app-sidebar a:hover {
+  background: #eef2ff;
+  color: #1d4ed8;
 }
 
 .app-sidebar a.active {
-  font-weight: 600;
-  text-decoration: underline;
+  background: linear-gradient(135deg, #4949ff 0%, #0000ff 100%);
+  color: #ffffff;
+  box-shadow: 0 10px 20px rgba(0, 0, 255, 0.22);
+  transform: translateY(-1px);
 }
 
-/* Conteúdo principal */
+/* === CONTEÚDO PRINCIPAL === */
+
 .app-content {
   flex: 1;
   padding: 1.5rem;
   overflow-y: auto;
-  background-color: #ffffff;
+  background-color: #f9fafb;
+}
+
+/* Pequeno ajuste em ecrãs mais pequenos */
+
+@media (max-width: 900px) {
+  .app-body {
+    flex-direction: column;
+  }
+
+  .app-sidebar {
+    width: 100%;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    overflow-x: auto;
+    padding: 0.75rem 1rem;
+  }
+
+  .app-sidebar nav {
+    flex-direction: row;
+  }
+
+  .app-content {
+    padding: 1rem;
+  }
 }
