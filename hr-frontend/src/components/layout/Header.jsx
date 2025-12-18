@@ -1,19 +1,18 @@
-
-// Header.jsx
 import { useNavigate } from "react-router-dom";
 import { logout } from "../../services/apiClient";
+
+import "./layout.css";
 
 function Header({ user }) {
   const navigate = useNavigate();
 
   async function handleLogout() {
     try {
-      await logout();           // revoga refresh + limpa localStorage
+      await logout();          
     } finally {
       navigate("/login", { replace: true });
     }
   }
-  // console.log(user);
 
   return (
     <header className="app-header">

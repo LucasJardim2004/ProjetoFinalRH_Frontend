@@ -1,14 +1,12 @@
-
-// Sidebar.jsx
 import { NavLink } from "react-router-dom";
 
+import "./layout.css";
+
 function Sidebar({ user, loading }) {
-  if (loading) return null; // optional: show skeleton instead
+  if (loading) return null; 
 
   const roles = Array.isArray(user?.roles) ? user.roles : [];
 
-  // Use your business rule (first role is "HR"), or a broader check:
-  // if (!roles.includes("HR")) return null;
   if (roles[0] !== "HR") return null;
 
   return (
