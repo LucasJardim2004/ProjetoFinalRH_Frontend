@@ -1,21 +1,35 @@
-import { Link } from "react-router-dom";
 
-function Header({ role }) {
+// Header.jsx
+import { useNavigate } from "react-router-dom";
+import { logout } from "../../services/apiClient";
+
+function Header({ user }) {
+  const navigate = useNavigate();
+
+  async function handleLogout() {
+    try {
+      await logout();           // revoga refresh + limpa localStorage
+    } finally {
+      navigate("/login", { replace: true });
+    }
+  }
+  // console.log(user);
+
   return (
     <header className="app-header">
       <div className="logo">HR System</div>
       <div className="header-right">
         <div className="user-info">
-          <span>Utilizador Demo</span>
+          <span>{user?.fullName ?? user?.userName ?? "—"}</span>
           <span className="role-label">
-            {role === "funcionario" ? "Funcionário" : "Recursos Humanos"}
+            {user?.roles[0] === "HR"  ? " | HR" : " | Employee"}
           </span>
         </div>
-        <Link to="/login" className="logout-link">
+        <button type="button" className="logout-link" onClick={handleLogout}>
           Sair
-        </Link>
+        </button>
       </div>
-    </header>
+       </header>
   );
 }
 
