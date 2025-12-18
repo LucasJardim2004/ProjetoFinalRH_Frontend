@@ -31,6 +31,8 @@ function AppRoutes() {
   // Por agora “forçamos” um role para ver o layout a funcionar
   const fakeRole = "funcionario"; // ou "rh"
 
+  // const { user, loading } = AuthProvider();
+
   return (
     <AuthProvider>
       <BrowserRouter>
@@ -42,9 +44,7 @@ function AppRoutes() {
 
           <Route element={<AuthGuard />}>
             <Route
-              path="/funcionario/:businessEntityID"
-              element={<DashboardFuncionario />}
-            />
+              path= "/funcionario/:businessEntityID"  element={<DashboardFuncionario />}/>
             <Route path="/rh/criarVaga" element={<CriarVaga />} />
             <Route path="/rh/editarVaga" element={<EditarVaga />} />
             <Route

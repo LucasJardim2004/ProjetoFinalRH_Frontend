@@ -81,6 +81,14 @@ function ListaFuncionarios() {
     },
   ]);
 
+const handleRowClicked = (e) => {
+    const id = rowData.businessEntityID;
+    console.log(id);
+    if (id != null) {
+      navigate(`/funcionario/${id}`);
+    }
+  };
+
   return (
     <div className="vagas-page">
       <div className="vagas-header">
@@ -103,6 +111,7 @@ function ListaFuncionarios() {
             headerHeight={40}
             pagination={true}
             paginationPageSize={20}
+            onRowClicked={handleRowClicked}
           />
         </div>
       </div>

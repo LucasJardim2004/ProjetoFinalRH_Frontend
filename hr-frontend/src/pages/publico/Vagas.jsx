@@ -21,10 +21,8 @@ import { useAuth } from "../../AuthProvider.jsx"
 const ApplyCellRenderer = (props) => {
   const navigate = useNavigate();
   const { data, onDelete } = props;
-<<<<<<< HEAD
-=======
+
   const { user, loading } = useAuth();
->>>>>>> origin/authentication
 
   const handleApply = () => {
     navigate("/candidatura", {
@@ -52,7 +50,7 @@ const ApplyCellRenderer = (props) => {
       return;
     }
     onDelete(data.openingID);
-<<<<<<< HEAD
+
   };
 
   const handleSeeCandidates = () => {
@@ -68,8 +66,6 @@ const ApplyCellRenderer = (props) => {
         jobTitle: data.jobTitle,
       },
     });
-=======
->>>>>>> origin/authentication
   };
 
   return (
@@ -83,12 +79,8 @@ const ApplyCellRenderer = (props) => {
       >
         ✏️
       </button>
-<<<<<<< HEAD
-
-=======
       )}
       {user?.roles?.[0] === "HR" && (
->>>>>>> origin/authentication
       <button
         type="button"
         className="vagas-icon-btn vagas-icon-btn-danger"
@@ -97,20 +89,8 @@ const ApplyCellRenderer = (props) => {
       >
         🗑️
       </button>
-<<<<<<< HEAD
-
-      <button
-        type="button"
-        onClick={handleSeeCandidates}
-        className="button-9 vagas-see-candidates-btn"
-      >
-        See candidates
-      </button>
-
-=======
       )}
       
->>>>>>> origin/authentication
       <button type="button" onClick={handleApply} className="button-9">
         Apply
       </button>

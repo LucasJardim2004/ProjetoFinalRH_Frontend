@@ -130,11 +130,6 @@ export function getEmployees() {
   return apiFetch("/Employee");
 }
 
-// GET /api/v1/Employee/{id}
-export function getEmployee(id) {
-  return apiFetch(`/Employee/${id}`);
-}
-
 // POST /api/v1/Employee
 // Expects an EmployeeWithPersonDTO-like object:
 // {

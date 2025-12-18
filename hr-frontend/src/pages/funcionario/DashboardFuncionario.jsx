@@ -2,6 +2,7 @@
 // src/pages/funcionario/DashboardFuncionario.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import Header from "../../components/layout/Header";
 import {
   getEmployee,
   patchEmployee,
@@ -14,6 +15,8 @@ import "./dashboardFuncionario.css";
 
 // Base AG Grid CSS (required)
 import "ag-grid-community/styles/ag-grid.css";
+
+import { useAuth } from "/src/AuthProvider.jsx";
 
 // ========================
 // AG Grid (Theming API)
@@ -577,10 +580,13 @@ export default function DashboardFuncionario() {
 
   const [showAddDeptModal, setShowAddDeptModal] = useState(false);
   const [showAddPayModal, setShowAddPayModal] = useState(false);
+  const { user } = useAuth();
+
+  console.log(user);
 
   // Reload helper
   const reloadEmployee = React.useCallback(async () => {
-    const employee = await getEmployee(Number(businessEntityID ?? 1));
+    const employee = await getEmployee(Number(user.businessEntityID ?? 1));
     setEmp(employee);
   }, [businessEntityID]);
 
