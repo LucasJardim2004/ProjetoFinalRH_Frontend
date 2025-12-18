@@ -16,6 +16,8 @@ import "./listaFuncionarios.css";
 
 import { getEmployees } from "../../services/apiClient";
 
+import { useAuth } from "../../AuthProvider.jsx"
+
 const ApplyCellRenderer = (props) => {
   const navigate = useNavigate();
   const { data, onDelete } = props;
@@ -23,11 +25,7 @@ const ApplyCellRenderer = (props) => {
   const { user, loading } = useAuth();
 
   const handleDetail = () => {
-    navigate("/funcionario/:businessEntityID", {
-      state: {
-        businessEntityID: data.businessEntityID,
-      },
-    });
+    navigate(`/funcionario/${data.businessEntityID}`);
   };
 
   return (
