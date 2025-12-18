@@ -184,6 +184,22 @@ export function getCandidateInfosByOpening(openingId){
   return apiFetch(`/CandidateInfo/by-opening/${openingId}`);
 }
 
+export async function deleteCandidateInfo(id) {
+  await apiFetch(`/CandidateInfo/${id}`, {
+    method: "DELETE",
+  });
+  // No content is returned, so just return a simple confirmation
+  return { success: true, deletedId: id };
+}
+
+// Delete JobCandidate by ID
+export async function deleteJobCandidate(id) {
+  await apiFetch(`/JobCandidate/${id}`, {
+    method: "DELETE",
+  });
+  return { success: true, deletedId: id };
+}
+
 // POST /api/v1/CandidateInfo
 // Expects a CandidateInfoDTO-like object:
 // {
@@ -219,12 +235,6 @@ export function updateCandidateInfo(id, candidatePartialDto) {
   });
 }
 
-// DELETE /api/v1/CandidateInfo/{id}
-export function deleteCandidateInfo(id) {
-  return apiFetch(`/CandidateInfo/${id}`, {
-    method: "DELETE",
-  });
-}
 
 
 /**
@@ -292,11 +302,11 @@ export function updateJobCandidate(id, candidatePartial) {
 }
 
 // DELETE /api/v1/JobCandidate/{id}
-export function deleteJobCandidate(id) {
+/* export function deleteJobCandidate(id) {
   return apiFetch(`/JobCandidate/${id}`, {
     method: "DELETE",
   });
-}
+} */
 
 // Build a URL to download a candidate CV by file name
 export function getCandidateCvUrl(fileName) {
@@ -400,6 +410,36 @@ export async function patchEmployee(id, partialDto) {
  
   return result;
 }
+
+/* export async function createEmployee(dto) {
+  const employee = await apiFetch(`/Employee`, {
+    method: "POST",
+    body: dto,
+  });
+  return employee; // contains BusinessEntityID and other EmployeeDTO fields
+} */
+
+export async function registerEmployee(dto) {
+  const result = await apiFetch(`/Auth/register`, {
+    method: "POST",
+    body: dto,
+  });
+  return result; // contains tokens and user info
+}
+
+ export async function updateUserRoles(userId) {
+  const body = {
+    UserId: userId,
+    AddRoles: ["Employee"], // always add Employee role
+    RemoveRoles: [],        // nothing to remove
+  };
+
+  const result = await apiFetch(`/Auth/update-roles`, {
+    method: "POST",
+    body,
+  });
+  return result; // contains updated roles and new access token
+} 
 
 
 /**

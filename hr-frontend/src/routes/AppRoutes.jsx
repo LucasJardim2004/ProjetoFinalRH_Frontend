@@ -19,6 +19,7 @@ import CriarVaga from "../pages/rh/CriarVaga.jsx";
 import EditarVaga from "../pages/rh/EditarVaga.jsx";
 import ListaFuncionarios from "../pages/rh/ListaFuncionarios.jsx";
 import ListaCandidaturas from "../pages/rh/ListaCandidaturas.jsx";
+import DetalhesCandidatura from "../pages/rh/DetalhesCandidatura.jsx";
 
 function AppRoutes() {
   return (
@@ -42,13 +43,22 @@ function AppRoutes() {
                 element={<DashboardFuncionario />}
               />
 
-              {/* Bloco de rotas RH – exige role HR */}
-              <Route element={<RequireRole allowed={['HR']} />}>
-                <Route path="/rh/criarVaga" element={<CriarVaga />} />
-                <Route path="/rh/editarVaga" element={<EditarVaga />} />
-                <Route path="/rh/listaFuncionarios" element={<ListaFuncionarios />} />
-                <Route path="/rh/listaCandidaturas" element={<ListaCandidaturas />} />
-              </Route>
+              {/* Páginas RH */}
+              <Route path="/rh/criarVaga" element={<CriarVaga />} />
+              <Route path="/rh/editarVaga" element={<EditarVaga />} />
+              <Route
+                path="/rh/listaFuncionarios"
+                element={<ListaFuncionarios />}
+              />
+              <Route
+                path="/rh/listaCandidaturas"
+                element={<ListaCandidaturas />}
+              />
+
+              <Route
+                path="rh/candidaturas/:jobCandidateID"
+                element={<DetalhesCandidatura />}
+              />
             </Route>
           </Route>
         </Routes>
