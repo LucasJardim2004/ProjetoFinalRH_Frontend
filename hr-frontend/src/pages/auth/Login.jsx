@@ -1,12 +1,35 @@
+
+// /src/pages/auth/Login.jsx
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "/src/AuthProvider.jsx";
 import "./auth.css";
 
 function Login() {
   const [showPassword, setShowPassword] = useState(false);
+  const [identifier, setIdentifier] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+  const { login } = useAuth();
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
-    // Por agora não faz nada. Mais tarde ligas à API .NET.
+    setError(null);
+    setLoading(true);
+
+    try {
+      // 1) login via provider → stores tokens + triggers user refresh
+      await login(identifier, password);
+
+      // 2) redirect (e.g., to home/dashboard)
+      navigate("/");
+    } catch (err) {
+      setError(err.message || "Falha no login");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -19,12 +42,15 @@ function Login() {
 
         <form onSubmit={handleSubmit} className="login-form">
           <div className="form-group">
-            <label htmlFor="identifier">Email ou username</label>
+            <label htmlFor="identifier">Email</label>
             <input
               id="identifier"
-              type="text"
+              type="email"
               placeholder="ex: user@email.com"
               autoComplete="username"
+              value={identifier}
+              onChange={(e) => setIdentifier(e.target.value)}
+              required
             />
           </div>
 
@@ -35,6 +61,9 @@ function Login() {
                 id="password"
                 type={showPassword ? "text" : "password"}
                 autoComplete="current-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
               />
               <button
                 type="button"
@@ -46,13 +75,15 @@ function Login() {
             </div>
           </div>
 
-          <button type="submit" className="login-button">
-            Entrar
+          <button type="submit" className="login-button" disabled={loading}>
+            {loading ? "A entrar..." : "Entrar"}
           </button>
+
+          {error && <div className="error">{error}</div>}
         </form>
 
         <div className="login-footer">
-          <span>© {new Date().getFullYear()} Company System</span>
+          <span>© {new Date().getFullYear()} Company</span>
         </div>
       </div>
     </div>
@@ -60,3 +91,4 @@ function Login() {
 }
 
 export default Login;
+

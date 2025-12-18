@@ -16,9 +16,12 @@ import "./vagas.css";
 
 import { getOpenings, deleteOpening } from "../../services/apiClient";
 
+import { useAuth } from "../../AuthProvider.jsx"
+
 const ApplyCellRenderer = (props) => {
   const navigate = useNavigate();
-  const { data, onDelete } = props; 
+  const { data, onDelete } = props;
+  const { user, loading } = useAuth();
 
   const handleApply = () => {
     navigate("/candidatura", { state: { jobTitle: data.jobTitle } });
@@ -40,11 +43,12 @@ const ApplyCellRenderer = (props) => {
       alert("Could not detect opening ID for this row.");
       return;
     }
-    onDelete(data.openingID); 
+    onDelete(data.openingID);
   };
 
   return (
     <div className="vagas-actions-cell">
+      {user?.roles?.[0] === "HR" && (
       <button
         type="button"
         className="vagas-icon-btn"
@@ -54,6 +58,8 @@ const ApplyCellRenderer = (props) => {
       >
         ✏️
       </button>
+      )}
+      {user?.roles?.[0] === "HR" && (
       <button
         type="button"
         className="vagas-icon-btn vagas-icon-btn-danger"
@@ -63,6 +69,8 @@ const ApplyCellRenderer = (props) => {
       >
         🗑️
       </button>
+      )}
+      
       <button type="button" onClick={handleApply} className="button-9">
         Apply
       </button>
@@ -73,6 +81,9 @@ const ApplyCellRenderer = (props) => {
 function Vagas() {
   const [rowData, setRowData] = useState([]);
   const navigate = useNavigate();
+  const { user, loading } = useAuth();
+
+  console.log(user);
 
   function handleGoToCreateOpening() {
     navigate("/rh/criarVaga");
@@ -130,9 +141,9 @@ function Vagas() {
     { field: "dateCreated", headerName: "Date Created" },
     {
       headerName: "Actions",
-      cellRenderer: ApplyCellRenderer, 
+      cellRenderer: ApplyCellRenderer,
       cellRendererParams: {
-        onDelete: handleDeleteOpening, 
+        onDelete: handleDeleteOpening,
       },
       flex: 1.5,
     },
@@ -149,6 +160,7 @@ function Vagas() {
           </p>
         </div>
 
+        {user?.roles?.[0] === "HR" && (
         <button
           type="button"
           onClick={handleGoToCreateOpening}
@@ -156,6 +168,7 @@ function Vagas() {
         >
           + Create opening
         </button>
+        )}
       </div>
 
       <div className="vagas-card">

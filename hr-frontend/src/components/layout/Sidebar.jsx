@@ -1,30 +1,24 @@
+
+// Sidebar.jsx
 import { NavLink } from "react-router-dom";
 
-function Sidebar({ role }) {
+function Sidebar({ user, loading }) {
+  if (loading) return null; // optional: show skeleton instead
+
+  const roles = Array.isArray(user?.roles) ? user.roles : [];
+
+  // Use your business rule (first role is "HR"), or a broader check:
+  // if (!roles.includes("HR")) return null;
+  if (roles[0] !== "HR") return null;
+
   return (
     <aside className="app-sidebar">
-      {role === "funcionario" && (
-        <nav>
-          <NavLink to="/">Dashboard</NavLink>
-          {/* <NavLink to="/perfil">Meu Perfil</NavLink>
-          <NavLink to="/pagamentos">Pagamentos</NavLink>
-          <NavLink to="/movimentacoes">Movimentações</NavLink>
-          <NavLink to="/notificacoes">Notificações</NavLink> */}
-        </nav>
-      )}
+      <nav>
+        <NavLink to="/">Dashboard</NavLink>
+        <NavLink to="/rh/listaFuncionarios">Lista Funcionarios</NavLink>
+        <NavLink to="/Vagas">Lista de Vagas</NavLink>
 
-      {/* {role === "rh" && (
-        <nav>
-          <NavLink to="/rh/dashboard">Dashboard RH</NavLink>
-          <NavLink to="/rh/colaboradores">Colaboradores</NavLink>
-          <NavLink to="/rh/candidatos">Candidatos</NavLink>
-          <NavLink to="/rh/gestao-pagamentos-mov">
-            Pagamentos &amp; Movimentações
-          </NavLink>
-          <NavLink to="/rh/logs">Logs</NavLink>
-          <NavLink to="/notificacoes">Notificações</NavLink>
-        </nav>
-      )} */}
+      </nav>
     </aside>
   );
 }

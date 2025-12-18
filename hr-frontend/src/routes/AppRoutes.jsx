@@ -1,7 +1,8 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-
+import AuthGuard from "/src/routes/AuthGuard.jsx"; // absolute path (Vite supports it)
 // Layout
 import AppLayout from "../components/layout/AppLayout.jsx";
+import AuthProvider from "../AuthProvider.jsx";
 
 // Páginas públicas
 import Login from "../pages/auth/Login.jsx";
@@ -31,24 +32,29 @@ function AppRoutes() {
   const fakeRole = "funcionario"; // ou "rh"
 
   return (
-    <BrowserRouter>
-      <Routes>
-        {/* Rotas públicas (sem header/sidebar) */}
-        <Route path="/login" element={<Login />} />
-        <Route path="/candidatura" element={<Candidatura />} />
-        <Route path="/vagas" element={<Vagas />} />
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          {/* Rotas públicas (sem header/sidebar) */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/vagas" element={<Vagas />} />
+            <Route path="/candidatura" element={<Candidatura />} />
 
-        <Route path="/rh/criarVaga" element={<CriarVaga />} />
-        <Route path="/rh/editarVaga" element={<EditarVaga />} />
-        <Route path="/rh/listaFuncionarios" element={<ListaFuncionarios />} />
+          <Route element={<AuthGuard />}>
 
-        {/* Área interna COM header + sidebar */}
-        <Route path="/" element={<AppLayout role={fakeRole} />}>
-          {/* Página inicial: dashboard do funcionário */}
-          <Route index element={<DashboardFuncionario />} />
-        </Route>
-      </Routes>
-    </BrowserRouter>
+            <Route path="/rh/criarVaga" element={<CriarVaga />} />
+            <Route path="/rh/editarVaga" element={<EditarVaga />} />
+            <Route path="/rh/listaFuncionarios" element={<ListaFuncionarios />} />
+
+            {/* Área interna COM header + sidebar */}
+            <Route path="/" element={<AppLayout role={fakeRole} />}>
+              {/* Página inicial: dashboard do funcionário */}
+              <Route index element={<DashboardFuncionario />} />
+            </Route>
+          </Route>
+        </Routes >
+      </BrowserRouter >
+    </AuthProvider>
   );
 }
 
