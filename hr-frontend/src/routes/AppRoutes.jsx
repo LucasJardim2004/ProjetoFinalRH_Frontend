@@ -28,10 +28,10 @@ import ListaCandidaturas from "../pages/rh/ListaCandidaturas.jsx";
 // import LogsRh from "../pages/rh/LogsRh.jsx";
 
 function AppRoutes() {
-  // Por agora “forçamos” um role para ver o layout a funcionar
-  const fakeRole = "funcionario"; // ou "rh"
 
-  // const { user, loading } = AuthProvider();
+
+  // const { user, loading } = AuthProvider();  // Por agora “forçamos” um role para ver o layout a funcionar
+  const fakeRole = "funcionario"; // ou "rh"
 
   return (
     <AuthProvider>

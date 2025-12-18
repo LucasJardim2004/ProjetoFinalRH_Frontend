@@ -50,7 +50,6 @@ const ApplyCellRenderer = (props) => {
       return;
     }
     onDelete(data.openingID);
-
   };
 
   const handleSeeCandidates = () => {
@@ -103,8 +102,6 @@ function Vagas() {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
 
-  console.log(user);
-
   function handleGoToCreateOpening() {
     navigate("/rh/criarVaga");
   }
@@ -133,6 +130,7 @@ function Vagas() {
     async function loadOpenings() {
       try {
         const openings = await getOpenings();
+
         const mapped = openings.map((o) => ({
           openingID: o.openingID,
           jobTitle: o.jobTitle,
@@ -140,11 +138,14 @@ function Vagas() {
           dateCreated: o.dateCreated?.slice(0, 10),
           openFlag: o.openFlag,
         }));
+
         setRowData(mapped);
+
       } catch (err) {
         console.error("Error loading openings", err);
       }
     }
+
     loadOpenings();
   }, []);
 
@@ -200,6 +201,8 @@ function Vagas() {
             animateRows={true}
             rowHeight={40}
             headerHeight={40}
+            pagination={true}
+            paginationPageSize={20}
           />
         </div>
       </div>

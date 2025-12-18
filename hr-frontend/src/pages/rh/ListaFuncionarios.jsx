@@ -16,6 +16,31 @@ import "./listaFuncionarios.css";
 
 import { getEmployees } from "../../services/apiClient";
 
+const ApplyCellRenderer = (props) => {
+  const navigate = useNavigate();
+  const { data, onDelete } = props;
+
+  const { user, loading } = useAuth();
+
+  const handleDetail = () => {
+    navigate("/funcionario/:businessEntityID", {
+      state: {
+        businessEntityID: data.businessEntityID,
+      },
+    });
+  };
+
+  return (
+    <div className="vagas-actions-cell">
+      {user?.roles?.[0] === "HR" && (
+        <button type="button" onClick={handleDetail} className="button-9">
+          See Details
+        </button>
+      )}
+    </div>
+  );
+};
+
 function ListaFuncionarios() {
   const [rowData, setRowData] = useState([]);
   const navigate = useNavigate();
@@ -35,6 +60,7 @@ function ListaFuncionarios() {
         }));
 
         setRowData(mapped);
+
       } catch (err) {
         console.error("Error loading employees", err);
       }
@@ -51,11 +77,6 @@ function ListaFuncionarios() {
   };
 
   const [colDefs] = useState([
-    {
-      field: "businessEntityID",
-      headerName: "ID",
-      maxWidth: 110,
-    },
     {
       field: "jobTitle",
       headerName: "Job Title",
@@ -79,15 +100,12 @@ function ListaFuncionarios() {
       field: "birthDate",
       headerName: "Birth Date",
     },
+    {
+      headerName: "Actions",
+      cellRenderer: ApplyCellRenderer,
+      flex: 1,
+    },
   ]);
-
-const handleRowClicked = (e) => {
-    const id = rowData.businessEntityID;
-    console.log(id);
-    if (id != null) {
-      navigate(`/funcionario/${id}`);
-    }
-  };
 
   return (
     <div className="vagas-page">
@@ -111,7 +129,6 @@ const handleRowClicked = (e) => {
             headerHeight={40}
             pagination={true}
             paginationPageSize={20}
-            onRowClicked={handleRowClicked}
           />
         </div>
       </div>
