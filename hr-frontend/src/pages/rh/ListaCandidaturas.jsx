@@ -14,7 +14,39 @@ import "ag-grid-community/styles/ag-theme-quartz.css";
 
 import "./ListaCandidaturas.css";
 
-import { getCandidateInfosByOpening } from "../../services/apiClient";
+import {
+  getCandidateInfosByOpening,
+  getCandidateCvUrl,
+} from "../../services/apiClient";
+
+const CvButtonRenderer = (props) => {
+  const fileName = props.data?.resumeFile;
+
+  if (!fileName) {
+    return (
+      <span style={{ fontSize: "0.8rem", color: "#9ca3af" }}>
+        No CV
+      </span>
+    );
+  }
+
+  const url = getCandidateCvUrl(fileName);
+
+  const handleClick = () => {
+    if (!url) return;
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
+
+  return (
+    <button
+      type="button"
+      className="vagas-icon-btn"
+      onClick={handleClick}
+    >
+      Open CV
+    </button>
+  );
+};
 
 function ListaCandidaturas() {
   const [rowData, setRowData] = useState([]);
@@ -51,6 +83,10 @@ function ListaCandidaturas() {
           birthDate: c.birthDate ? c.birthDate.slice(0, 10) : "",
           nationalID: c.nationalID,
           comment: c.comment,
+          resumeFile:
+            c.jobCandidate?.resumeFile ??
+            c.JobCandidate?.ResumeFile ??
+            null,
         }));
 
         setRowData(mapped);
@@ -96,6 +132,12 @@ function ListaCandidaturas() {
       field: "birthDate",
       headerName: "Birth Date",
       maxWidth: 140,
+    },
+    {
+      headerName: "CV",
+      field: "resumeFile",
+      maxWidth: 140,
+      cellRenderer: CvButtonRenderer,
     },
   ]);
 

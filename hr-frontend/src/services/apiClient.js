@@ -311,6 +311,14 @@ export function deleteJobCandidate(id) {
   });
 }
 
+// Build a URL to download a candidate CV by file name
+export function getCandidateCvUrl(fileName) {
+  if (!fileName) return null;
+  return `${API_BASE_URL}/JobCandidate/download-cv/${encodeURIComponent(
+    fileName
+  )}`;
+}
+
 
 /**
  * Employee
