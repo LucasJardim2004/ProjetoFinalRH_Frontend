@@ -43,7 +43,7 @@ const CvButtonRenderer = (props) => {
       className="vagas-icon-btn"
       onClick={handleClick}
     >
-      Open CV
+      📄
     </button>
   );
 };
