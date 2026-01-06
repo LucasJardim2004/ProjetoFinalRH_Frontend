@@ -170,7 +170,7 @@ function ListaCandidaturas() {
       sortable: false,
       filter: false,
       flex: 0.6
-    }
+    },
     {
       headerName: "CV",
       field: "resumeFile",

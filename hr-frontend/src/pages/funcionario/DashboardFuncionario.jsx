@@ -231,6 +231,7 @@ function EditableField({
 
 function DeptEndDateCellRenderer(props) {
   const { value, data, onSaveEndDate, api } = props;
+  const user = useAuth().user;
 
   const initialDate = React.useMemo(() => {
     if (!value) return null;
@@ -307,7 +308,9 @@ function DeptEndDateCellRenderer(props) {
       {!editing ? (
         <>
           <span>{formatDate(value, DISPLAY_LOCALE)}</span>
+          {user?.roles?.[0] === "HR" && (
           <EditIconButton onClick={startEdit} title="Edit End" />
+          )}
         </>
       ) : (
         <>
@@ -767,9 +770,11 @@ export default function DashboardFuncionario() {
             <section className="employee-details-section">
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <h2 className="section-title">Department History</h2>
-                <button type="button" className="btn btn-primary" onClick={() => setShowAddDeptModal(true)}>
+                {user?.roles?.[0] === "HR" && (
+                  <button type="button" className="btn btn-primary" onClick={() => setShowAddDeptModal(true)}>
                   + Add Movement
                 </button>
+                )}
               </div>
               <div className="vagas-grid-wrapper">
                 <AgGridReact
@@ -779,7 +784,7 @@ export default function DashboardFuncionario() {
                   theme={myTheme}
                   animateRows={true}
                   rowClassRules={deptRowClassRules}
-                  rowHeight={64} /* inline editor friendly */
+                  rowHeight={64} 
                   headerHeight={40}
                   pagination={true}
                   paginationPageSize={10}
@@ -792,9 +797,11 @@ export default function DashboardFuncionario() {
             <section className="employee-details-section">
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <h2 className="section-title">Pay History</h2>
+                {user?.roles?.[0] === "HR" && (
                 <button type="button" className="btn btn-primary" onClick={() => setShowAddPayModal(true)}>
                   + Add Pay Change
                 </button>
+                )}
               </div>
               <div className="vagas-grid-wrapper">
                 <AgGridReact

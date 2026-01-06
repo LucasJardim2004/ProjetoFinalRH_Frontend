@@ -44,27 +44,29 @@ function AppRoutes() {
               />
 
               {/* Páginas RH */}
-              <Route path="/rh/criarVaga" element={<CriarVaga />} />
-              <Route path="/rh/editarVaga" element={<EditarVaga />} />
-              <Route
-                path="/rh/listaFuncionarios"
-                element={<ListaFuncionarios />}
-              />
-              <Route
-                path="/rh/listaCandidaturas"
-                element={<ListaCandidaturas />}
-              />
+              <Route element={<RequireRole allowedRoles={["RH"]} />}>
+                <Route path="/rh/criarVaga" element={<CriarVaga />} />
+                <Route path="/rh/editarVaga" element={<EditarVaga />} />
+                <Route
+                  path="/rh/listaFuncionarios"
+                  element={<ListaFuncionarios />}
+                />
+                <Route
+                  path="/rh/listaCandidaturas"
+                  element={<ListaCandidaturas />}
+                />
 
-              <Route
-                path="rh/candidaturas/:jobCandidateID"
-                element={<DetalhesCandidatura />}
-              />
+                <Route
+                  path="rh/candidaturas/:jobCandidateID"
+                  element={<DetalhesCandidatura />}
+                />
+              </Route>
             </Route>
           </Route>
         </Routes>
       </BrowserRouter>
     </AuthProvider>
-   );
+  );
 }
 
 export default AppRoutes;
