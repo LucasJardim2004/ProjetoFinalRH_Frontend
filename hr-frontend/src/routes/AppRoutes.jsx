@@ -44,7 +44,7 @@ function AppRoutes() {
               />
 
               {/* Páginas RH */}
-              <Route element={<RequireRole allowedRoles={["RH"]} />}>
+              <Route element={<RequireRole allowed={['HR']} />}>
                 <Route path="/rh/criarVaga" element={<CriarVaga />} />
                 <Route path="/rh/editarVaga" element={<EditarVaga />} />
                 <Route
