@@ -470,29 +470,59 @@ export async function patchEmail(id, emailAddress) {
  * Controller: EmployeeDepartmentHistoryController
  * Route base: api/v1/EmployeeDepartmentHistory
  */ 
+
+// --- Minimal local date helpers (avoid UTC shift) ---
+function isValidDate(d) {
+  return d instanceof Date && !isNaN(d.getTime());
+}
+function normalizeToDate(dateLike) {
+  if (!dateLike) return null;
+  if (dateLike instanceof Date) return new Date(dateLike.getTime());
+  if (typeof dateLike === "string") {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateLike);
+    if (m) return new Date(+m[1], +m[2] - 1, +m[3]); // local midnight
+    const parsed = new Date(dateLike);
+    return isValidDate(parsed) ? parsed : null;
+  }
+  return null;
+}
+function toLocalYmd(dateLike) {
+  const d = normalizeToDate(dateLike);
+  if (!isValidDate(d)) return "";
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+// --- Your API method (patched) ---
 export async function patchDepartmentHistoryEndDate(id, startDateOrRow, endDateYmd) {
   if (!endDateYmd) {
     throw new Error("EndDate cannot be empty.");
   }
- 
-  const encodedStart = encodeDateKeyForRoute(startDateOrRow);
- 
+
+  // Accept either a row object or a date/string for the start key
+  const ymd = toLocalYmd(
+    startDateOrRow?.startDate ??
+    startDateOrRow?.StartDate ??
+    startDateOrRow
+  );
+  if (!ymd) throw new Error("StartDate (row) is missing or invalid.");
+
+  const encodedStart = encodeURIComponent(ymd);
+
   const body = {
     BusinessEntityID: Number(id),
-    EndDate: endDateYmd, 
+    EndDate: endDateYmd, // expected "YYYY-MM-DD"
   };
- 
+
   const dto = await apiFetch(`/EmployeeDepartmentHistory/${id}_${encodedStart}`, {
     method: "PATCH",
     body,
   });
- 
-  return {
-       departmentID: dto?.DepartmentID ?? dto?.departmentID,
-    startDate: dto?.StartDate ?? dto?.startDate,
-    endDate: dto?.EndDate ?? dto?.endDate ?? endDateYmd,
-  };
+  return dto;
 }
+
  
 export async function createDepartmentHistory(businessEntityID, departmentID, startDateYmd) {
   if (!businessEntityID) throw new Error("BusinessEntityID is required.");

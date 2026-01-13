@@ -26,7 +26,40 @@ const myTheme = themeQuartz.withParams({
   accentColor: "#0E74A1",
 });
 
+function toLocalYmd(dateLike) {
+  if (!dateLike) return "";
+  const d = normalizeToDate(dateLike);
+  if (!d) return "";
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
 const DISPLAY_LOCALE = "pt-PT";
+
+    function validateEndDate(d, data) {
+      // 1) Forbid clearing
+      if (!d) return "Clearing EndDate is not supported.";
+
+      // 2) Ensure valid date
+      const endDate = normalizeToDate(d);
+      if (!isValidDate(endDate)) return "End date is invalid.";
+
+      // 3) Compare to start date if present
+      const startRaw = data?.startDate ?? data?.StartDate ?? null;
+      if (startRaw) {
+        const startDate = normalizeToDate(startRaw);
+        if (isValidDate(startDate)) {
+          const s = toLocalYmd(startDate); // "YYYY-MM-DD"
+          const e = toLocalYmd(endDate);   // "YYYY-MM-DD"
+          if (s && e && e < s) {
+            return "End date cannot be before start date.";
+          }
+        }
+      }
+      return null;
+    }
 
 function formatDate(value, locale = DISPLAY_LOCALE) {
   if (!value) return "—";
@@ -71,44 +104,26 @@ function isValidDate(d) {
 
 // Returns "YYYY-MM-DD" for a Date (local time), or for a date-like string.
 // Returns "" for falsy/invalid input.
-function toLocalYmd(dateLike) {
-  if (!dateLike) return "";
 
-  // If it's already "YYYY-MM-DD", keep it
-  if (typeof dateLike === "string" && /^\d{4}-\d{2}-\d{2}$/.test(dateLike)) {
-    return dateLike;
-  }
 
-  const d = normalizeToDate(dateLike);
-  if (!isValidDate(d)) return "";
 
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}
+
+
 
 // Turns "YYYY-MM-DD" (or Date-like) into a Date at local midnight.
 function normalizeToDate(dateLike) {
   if (!dateLike) return null;
-
   if (dateLike instanceof Date) return new Date(dateLike.getTime());
-
   if (typeof dateLike === "string") {
-    // Expect "YYYY-MM-DD" from inputs & storage. Build a local date.
     const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateLike);
-    if (match) {
-      const [_, y, m, d] = match;
-      // year, monthIndex (0-based), day
-      return new Date(Number(y), Number(m) - 1, Number(d));
-    }
-    // If it's a full ISO string, try Date, but beware UTC shift.
+    if (match) return new Date(+match[1], +match[2] - 1, +match[3]);
     const parsed = new Date(dateLike);
     return isValidDate(parsed) ? parsed : null;
   }
-
   return null;
 }
+
+
 
 
 function EditIconButton({ onClick, title = "Edit" }) {
@@ -306,28 +321,7 @@ function DeptEndDateCellRenderer(props) {
   }
 
 
-    function validateEndDate(d, data) {
-      // 1) Forbid clearing
-      if (!d) return "Clearing EndDate is not supported.";
 
-      // 2) Ensure valid date
-      const endDate = normalizeToDate(d);
-      if (!isValidDate(endDate)) return "End date is invalid.";
-
-      // 3) Compare to start date if present
-      const startRaw = data?.startDate ?? data?.StartDate ?? null;
-      if (startRaw) {
-        const startDate = normalizeToDate(startRaw);
-        if (isValidDate(startDate)) {
-          const s = toLocalYmd(startDate); // "YYYY-MM-DD"
-          const e = toLocalYmd(endDate);   // "YYYY-MM-DD"
-          if (s && e && e < s) {
-            return "End date cannot be before start date.";
-          }
-        }
-      }
-      return null;
-    }
 
 
   const unchanged = React.useMemo(() => {
@@ -763,11 +757,12 @@ export default function DashboardFuncionario() {
 
   /* AG Grid configuration */
   const defaultColDef = useMemo(() => ({
-    sortable: true,
-    filter: true,
+    sortable: false,
+    filter: false,
     resizable: true,
     flex: 1,
     editable: false,
+    minWidth: 140
   }), []);
 
   const deptCols = useMemo(() => [
@@ -776,7 +771,6 @@ export default function DashboardFuncionario() {
     {
       field: "endDate",
       headerName: "End",
-      maxWidth: 340,
       cellRenderer: DeptEndDateCellRenderer,
       cellRendererParams: { onSaveEndDate: onSaveDepartmentEndDate },
     },
@@ -792,7 +786,6 @@ export default function DashboardFuncionario() {
         typeof p.value === "number"
           ? p.value.toLocaleString(DISPLAY_LOCALE, { style: "currency", currency: "EUR" })
           : "—",
-      maxWidth: 180,
     },
     { field: "payFrequency", headerName: "Frequency", valueFormatter: (p) => formatPayFrequency(p.value), maxWidth: 140 },
   ], []);
@@ -880,7 +873,7 @@ export default function DashboardFuncionario() {
                   rowClassRules={deptRowClassRules}
                   rowHeight={64} 
                   headerHeight={40}
-                  pagination={true}
+                  pagination={false}
                   paginationPageSize={10}
                   domLayout="autoHeight"
                 />
