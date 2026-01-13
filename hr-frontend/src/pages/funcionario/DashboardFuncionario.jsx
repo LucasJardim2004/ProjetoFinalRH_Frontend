@@ -52,24 +52,64 @@ function formatPayFrequency(value) {
   if (value === 2) return "Biweekly";
   return value != null ? String(value) : "—";
 }
-function toISODateOnly(value) {
-  if (!value) return "";
-  const d = typeof value === "string" ? new Date(value) : value;
-  if (isNaN(d.getTime())) return "";
-  const yyyy = d.getFullYear();
-  const mm = String(d.getMonth() + 1).padStart(2, "0");
-  const dd = String(d.getDate()).padStart(2, "0");
-  return `${yyyy}-${mm}-${dd}`;
+
+function toISODateOnly(date) {
+  if (!date) return "";
+  if (typeof date === "string") return date; // already in correct format
+  return date.toISOString().split("T")[0]; // "YYYY-MM-DD"
 }
+
 function fromDateInput(value) {
   if (!value) return null;
-  const [y, m, d] = value.split("-").map(Number);
-  const dt = new Date(y, m - 1, d);
-  return isNaN(dt.getTime()) ? null : dt;
+  return new Date(value); // converts "YYYY-MM-DD" back to Date
 }
+
 function isValidDate(d) {
   return d instanceof Date && !isNaN(d.getTime());
 }
+
+
+// Returns "YYYY-MM-DD" for a Date (local time), or for a date-like string.
+// Returns "" for falsy/invalid input.
+function toLocalYmd(dateLike) {
+  if (!dateLike) return "";
+
+  // If it's already "YYYY-MM-DD", keep it
+  if (typeof dateLike === "string" && /^\d{4}-\d{2}-\d{2}$/.test(dateLike)) {
+    return dateLike;
+  }
+
+  const d = normalizeToDate(dateLike);
+  if (!isValidDate(d)) return "";
+
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+// Turns "YYYY-MM-DD" (or Date-like) into a Date at local midnight.
+function normalizeToDate(dateLike) {
+  if (!dateLike) return null;
+
+  if (dateLike instanceof Date) return new Date(dateLike.getTime());
+
+  if (typeof dateLike === "string") {
+    // Expect "YYYY-MM-DD" from inputs & storage. Build a local date.
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateLike);
+    if (match) {
+      const [_, y, m, d] = match;
+      // year, monthIndex (0-based), day
+      return new Date(Number(y), Number(m) - 1, Number(d));
+    }
+    // If it's a full ISO string, try Date, but beware UTC shift.
+    const parsed = new Date(dateLike);
+    return isValidDate(parsed) ? parsed : null;
+  }
+
+  return null;
+}
+
 
 function EditIconButton({ onClick, title = "Edit" }) {
   return (
@@ -92,11 +132,12 @@ function EditIconButton({ onClick, title = "Edit" }) {
   );
 }
 
+
 function EditableField({
   label,
   value,
   renderValue,
-  type = "text", 
+  type = "text",
   options = [],
   onSave,
   disabled = false,
@@ -113,7 +154,7 @@ function EditableField({
   }, [value]);
 
   function startEdit() {
-    if (disabled || saving) return;
+    if (disabled || saving) return; // Prevent editing if disabled
     setError(null);
     setLocal(value ?? "");
     setEditing(true);
@@ -161,7 +202,9 @@ function EditableField({
         {!editing ? (
           <>
             <span>{renderValue ? renderValue(value) : (value ?? "—")}</span>
-            <EditIconButton onClick={startEdit} title={`Edit ${label}`} />
+            {!disabled && (
+              <EditIconButton onClick={startEdit} title={`Edit ${label}`} />
+            )}
           </>
         ) : (
           <>
@@ -171,7 +214,7 @@ function EditableField({
                 value={local ?? ""}
                 onChange={(e) => setLocal(e.target.value)}
                 style={{ flex: 1, padding: 6 }}
-                disabled={saving}
+                disabled={saving || disabled}
               />
             )}
 
@@ -180,7 +223,7 @@ function EditableField({
                 type="date"
                 value={toISODateOnly(local)}
                 onChange={(e) => setLocal(fromDateInput(e.target.value))}
-                disabled={saving}
+                disabled={saving || disabled}
               />
             )}
 
@@ -188,7 +231,7 @@ function EditableField({
               <select
                 value={local ?? ""}
                 onChange={(e) => setLocal(e.target.value)}
-                disabled={saving}
+                disabled={saving || disabled}
               >
                 <option value="" disabled>Select…</option>
                 {options.map((opt) => (
@@ -202,7 +245,7 @@ function EditableField({
             <button
               type="button"
               onClick={commit}
-              disabled={saving || unchanged}
+              disabled={saving || unchanged || disabled}
               className="btn btn-primary"
               style={{ marginLeft: 8 }}
             >
@@ -228,6 +271,7 @@ function EditableField({
     </div>
   );
 }
+
 
 function DeptEndDateCellRenderer(props) {
   const { value, data, onSaveEndDate, api } = props;
@@ -261,23 +305,30 @@ function DeptEndDateCellRenderer(props) {
     setEditing(false);
   }
 
-  function validateEndDate(d) {
-    if (!d) return "Clearing EndDate is not supported.";
-    if (!isValidDate(d)) return "End date is invalid.";
 
-    const startRaw = data?.startDate ?? data?.StartDate ?? null;
-    if (startRaw) {
-      const start = new Date(startRaw);
-      if (isValidDate(start)) {
-        const s = toISODateOnly(start);
-        const e = toISODateOnly(d);
-        if (s && e && e < s) {
-          return "End date cannot be before start date.";
+    function validateEndDate(d, data) {
+      // 1) Forbid clearing
+      if (!d) return "Clearing EndDate is not supported.";
+
+      // 2) Ensure valid date
+      const endDate = normalizeToDate(d);
+      if (!isValidDate(endDate)) return "End date is invalid.";
+
+      // 3) Compare to start date if present
+      const startRaw = data?.startDate ?? data?.StartDate ?? null;
+      if (startRaw) {
+        const startDate = normalizeToDate(startRaw);
+        if (isValidDate(startDate)) {
+          const s = toLocalYmd(startDate); // "YYYY-MM-DD"
+          const e = toLocalYmd(endDate);   // "YYYY-MM-DD"
+          if (s && e && e < s) {
+            return "End date cannot be before start date.";
+          }
         }
       }
+      return null;
     }
-    return null;
-  }
+
 
   const unchanged = React.useMemo(() => {
     return toISODateOnly(initialDate) === toISODateOnly(local);
@@ -564,8 +615,6 @@ export default function DashboardFuncionario() {
   const [showAddPayModal, setShowAddPayModal] = useState(false);
   const { user, loading: authLoading } = useAuth();
 
-  console.log(user);
-
   const roles = Array.isArray(user?.roles) ? user.roles : [];
   const isHR = roles[0] === "HR";
 
@@ -640,28 +689,62 @@ export default function DashboardFuncionario() {
   }
 
   /* Dept EndDate (renderer) */
+
   const onSaveDepartmentEndDate = React.useCallback(async (rowData, newDate) => {
-    if (!newDate || !isValidDate(newDate)) {
+    // Normalize first
+    const endDate = normalizeToDate(newDate);
+    if (!isValidDate(endDate)) {
       throw new Error("End date is invalid.");
     }
-    const endYmd = toISODateOnly(newDate);
+
+    // Build YYYY-MM-DD (local) for backend
+    const endYmd = toLocalYmd(endDate);
     if (!endYmd) throw new Error("Unable to convert end date.");
 
-    await patchDepartmentHistoryEndDate(Number(emp.businessEntityID), rowData, endYmd);
-    await reloadEmployee(); // canonical refresh
+    // Optional: run the same validation here for safety
+    const v = validateEndDate(endDate, rowData);
+    if (v) throw new Error(v);
+
+    await patchDepartmentHistoryEndDate(
+      Number(emp.businessEntityID),
+      rowData,
+      endYmd
+    );
+    await reloadEmployee();
   }, [emp?.businessEntityID, reloadEmployee]);
 
+
   /* Create Department Movement */
+
   const handleAddDepartmentMovement = React.useCallback(async (departmentID, startDate) => {
     const startYmd = toISODateOnly(startDate);
+    const histories = emp?.employeeDepartmentHistories ?? [];
 
-    // Duplicate guard
-    const exists = (emp?.employeeDepartmentHistories ?? []).some(
+    // Guard 1: prevent adding when there is any open movement (endDate is null/undefined/empty)
+    const hasOpenMovement = histories.some(h => {
+      // handle different shapes: Date object, ISO string, null/undefined
+      const end = h.endDate;
+      if (end == null) return true; // null or undefined
+      if (typeof end === "string" && end.trim() === "") return true; // empty string
+      // if it's a Date, it's "closed" as long as it's a valid date
+      // (you can add a validity check if needed)
+      return false;
+    });
+
+    
+    if (hasOpenMovement) {
+      return ("There's already an open movement.");
+    }
+
+
+    // Guard 2: duplicate prevention (same departmentID and startDate)
+    const startDupExists = histories.some(
       (r) =>
         String(r.departmentID) === String(departmentID) &&
         toISODateOnly(r.startDate) === startYmd
     );
-    if (exists) {
+
+    if (startDupExists) {
       throw new Error("A movement with this DepartmentID and Start Date already exists.");
     }
 
@@ -669,6 +752,7 @@ export default function DashboardFuncionario() {
     await createDepartmentHistory(emp.businessEntityID, departmentID, startYmd);
     await reloadEmployee();
   }, [emp?.businessEntityID, emp?.employeeDepartmentHistories, reloadEmployee]);
+
 
   /* Create Pay History (Rate + Frequency only; server sets RateChangeDate = now) */
   const handleAddPayHistory = React.useCallback(async (rate, payFrequency) => {
@@ -748,15 +832,25 @@ export default function DashboardFuncionario() {
                   <span className="value">{emp.nationalIDNumber ?? "—"}</span>
                 </div>
 
-                <EditableField label="Job Title" value={emp.jobTitle ?? ""} onSave={saveJobTitle} type="text" />
+                <EditableField label="Job Title" value={emp.jobTitle ?? ""} onSave={saveJobTitle} type="text" disabled={user?.roles?.[0] !== "HR"}/>
                 <EditableField label="Gender" value={emp.gender ?? ""} renderValue={(v) => formatGender(v)} type="select" options={[
                   { value: "M", label: "Male" }, { value: "F", label: "Female" },
                 ]} onSave={saveGender} />
                 <EditableField label="Marital Status" value={emp.maritalStatus ?? ""} renderValue={(v) => formatMaritalStatus(v)} type="select" options={[
                   { value: "M", label: "Married" }, { value: "S", label: "Single" },
-                ]} onSave={saveMaritalStatus} />
-                <EditableField label="Birth Date" value={emp.birthDate ? new Date(emp.birthDate) : null} renderValue={(v) => formatDate(v, DISPLAY_LOCALE)} type="date" onSave={saveBirthDate} parse={(d) => d} validate={(d) => (d && !isValidDate(d) ? "Birth date is invalid." : null)} />
-                <EditableField label="Hire Date" value={emp.hireDate ? new Date(emp.hireDate) : null} renderValue={(v) => formatDate(v, DISPLAY_LOCALE)} type="date" onSave={saveHireDate} parse={(d) => d} validate={(d) => (d && !isValidDate(d) ? "Hire date is invalid." : null)} />
+                ]} onSave={saveMaritalStatus} /> 
+                <EditableField
+                  label="Birth Date"
+                  value={emp.birthDate ? new Date(emp.birthDate) : null}
+                  renderValue={(v) => formatDate(v, DISPLAY_LOCALE)}
+                  type="date"
+                  onSave={saveBirthDate}
+                  parse={(d) => d}
+                  validate={(d) => (d && !isValidDate(d) ? "Birth date is invalid." : null)}
+                  disabled={user?.roles?.[0] !== "HR"} // <-- Non-HR users cannot edit
+                />
+
+                <EditableField label="Hire Date" value={emp.hireDate ? new Date(emp.hireDate) : null} renderValue={(v) => formatDate(v, DISPLAY_LOCALE)} type="date" onSave={saveHireDate} parse={(d) => d} validate={(d) => (d && !isValidDate(d) ? "Hire date is invalid." : null)} disabled={user?.roles?.[0] !== "HR"} />
                 <EditableField label="Email" value={emp.emailAddress ?? ""} type="text" validate={(v) => v && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) ? "Invalid email format" : null} onSave={saveEmail} />
 
                 <div className="detail-item">
