@@ -36,6 +36,7 @@ function toLocalYmd(dateLike) {
   return `${y}-${m}-${day}`;
 }
 
+
 const DISPLAY_LOCALE = "pt-PT";
 
     function validateEndDate(d, data) {
@@ -101,15 +102,6 @@ function isValidDate(d) {
   return d instanceof Date && !isNaN(d.getTime());
 }
 
-
-// Returns "YYYY-MM-DD" for a Date (local time), or for a date-like string.
-// Returns "" for falsy/invalid input.
-
-
-
-
-
-
 // Turns "YYYY-MM-DD" (or Date-like) into a Date at local midnight.
 function normalizeToDate(dateLike) {
   if (!dateLike) return null;
@@ -122,8 +114,6 @@ function normalizeToDate(dateLike) {
   }
   return null;
 }
-
-
 
 
 function EditIconButton({ onClick, title = "Edit" }) {
@@ -714,21 +704,17 @@ export default function DashboardFuncionario() {
     const startYmd = toISODateOnly(startDate);
     const histories = emp?.employeeDepartmentHistories ?? [];
 
-    // Guard 1: prevent adding when there is any open movement (endDate is null/undefined/empty)
-    const hasOpenMovement = histories.some(h => {
-      // handle different shapes: Date object, ISO string, null/undefined
+    
+    const hasOpenMovement = histories.some((h) => {
       const end = h.endDate;
-      if (end == null) return true; // null or undefined
-      if (typeof end === "string" && end.trim() === "") return true; // empty string
-      // if it's a Date, it's "closed" as long as it's a valid date
-      // (you can add a validity check if needed)
-      return false;
+      return end == null || (typeof end === "string" && end.trim() === "");
     });
 
-    
     if (hasOpenMovement) {
-      return ("There's already an open movement.");
+      // IMPORTANT: throw, do NOT return a string
+      throw new Error("There's already an open movement. Close it before adding a new one.");
     }
+
 
 
     // Guard 2: duplicate prevention (same departmentID and startDate)
@@ -742,10 +728,18 @@ export default function DashboardFuncionario() {
       throw new Error("A movement with this DepartmentID and Start Date already exists.");
     }
 
-    setShowAddDeptModal(false);
+    
     await createDepartmentHistory(emp.businessEntityID, departmentID, startYmd);
+
+    // Option A: server is source of truth — refresh canonical data
     await reloadEmployee();
-  }, [emp?.businessEntityID, emp?.employeeDepartmentHistories, reloadEmployee]);
+
+    // ✅ Close modal AFTER success
+    setShowAddDeptModal(false);
+  },
+  [emp?.businessEntityID, emp?.employeeDepartmentHistories, reloadEmployee]
+);
+
 
 
   /* Create Pay History (Rate + Frequency only; server sets RateChangeDate = now) */
@@ -765,20 +759,29 @@ export default function DashboardFuncionario() {
     minWidth: 140
   }), []);
 
-  const deptCols = useMemo(() => [
-    { field: "departmentID", headerName: "Department ID", maxWidth: 140 },
-    { field: "startDate", headerName: "Start", valueFormatter: (p) => formatDate(p.value, DISPLAY_LOCALE), maxWidth: 140 },
-    {
-      field: "endDate",
-      headerName: "End",
-      cellRenderer: DeptEndDateCellRenderer,
-      cellRendererParams: { onSaveEndDate: onSaveDepartmentEndDate },
-    },
-    { headerName: "Status", valueGetter: (p) => (p.data?.endDate ? "Previous" : "Current"), maxWidth: 140 },
-  ], [onSaveDepartmentEndDate]);
+
+// DashboardFuncionario.jsx
+const deptCols = useMemo(() => [
+  { field: "departmentID", headerName: "Department ID", maxWidth: 140 },
+  {
+    headerName: "Department",
+    valueGetter: (p) => p.data?.departmentName ?? `#${p.data?.departmentID ?? "—"}`,
+    flex: 1,
+    minWidth: 180,
+  },
+  { field: "startDate", headerName: "Start", valueFormatter: (p) => formatDate(p.value, DISPLAY_LOCALE)},
+  {
+    field: "endDate",
+    headerName: "End",
+    cellRenderer: DeptEndDateCellRenderer,
+    cellRendererParams: { onSaveEndDate: onSaveDepartmentEndDate },
+  },
+  { headerName: "Status", valueGetter: (p) => (p.data?.endDate ? "Previous" : "Current")},
+], [onSaveDepartmentEndDate]);
+
 
   const payCols = useMemo(() => [
-    { field: "rateChangeDate", headerName: "Rate Change Date", valueFormatter: (p) => formatDate(p.value, DISPLAY_LOCALE), maxWidth: 180 },
+    { field: "rateChangeDate", headerName: "Rate Change Date", valueFormatter: (p) => formatDate(p.value, DISPLAY_LOCALE)},
     {
       field: "rate",
       headerName: "Rate (€/hour)",
@@ -787,12 +790,32 @@ export default function DashboardFuncionario() {
           ? p.value.toLocaleString(DISPLAY_LOCALE, { style: "currency", currency: "EUR" })
           : "—",
     },
-    { field: "payFrequency", headerName: "Frequency", valueFormatter: (p) => formatPayFrequency(p.value), maxWidth: 140 },
+    { field: "payFrequency", headerName: "Frequency", valueFormatter: (p) => formatPayFrequency(p.value)},
   ], []);
 
   const deptRowClassRules = useMemo(() => ({
     "row-current": (params) => !params.data?.endDate,
   }), []);
+
+  
+const currentDepartment = useMemo(() => {
+  const histories = emp?.employeeDepartmentHistories ?? [];
+  if (!histories.length) return null;
+
+  // Filter for open (endDate == null)
+  const open = histories.filter(h => !h.endDate);
+  if (open.length) {
+    // If multiple, pick the one with latest startDate
+    return open.sort((a, b) => new Date(b.startDate) - new Date(a.startDate))[0].departmentName ?? null;
+  }
+
+  // If no open, fallback to most recent by startDate
+  const latest = histories.sort((a, b) => new Date(b.startDate) - new Date(a.startDate))[0];
+  return latest?.departmentName ?? null;
+}, [emp]);
+
+
+  console.log(emp);
 
   return (
     <div className="vagas-page">
@@ -814,6 +837,17 @@ export default function DashboardFuncionario() {
             {/* General Info */}
             <section className="employee-details-section">
               <h2 className="section-title">General Information</h2>
+
+              
+              <div className="detail-item">
+                <span className="label">Name</span>
+                <span className="value">{emp.firstName + " " + emp.lastName ?? "—"}</span>
+              </div>
+
+              <div className="detail-item">
+                <span className="label">Department</span>
+                <span className="value">{currentDepartment}</span>
+              </div>
 
               <div className="employee-details-grid">
                 <div className="detail-item">
@@ -899,7 +933,7 @@ export default function DashboardFuncionario() {
                   animateRows={true}
                   rowHeight={40}
                   headerHeight={40}
-                  pagination={true}
+                  pagination={false}
                   paginationPageSize={10}
                   domLayout="autoHeight"
                 />

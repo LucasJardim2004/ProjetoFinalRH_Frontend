@@ -322,48 +322,57 @@ export function getCandidateCvUrl(fileName) {
  * Controller: EmployeeControler
  * Route base: api/v1/Employee
  */
+
 export async function getEmployee(id) {
   const data = await apiFetch(`/Employee/${id}`);
- 
+
   const employeeCore =
-    data?.Employee ??
-    data?.employee ??
-    {};
- 
-  const phoneNumber =
-    data?.PhoneNumber ??
-    data?.phoneNumber ??
-    null;
- 
-  const emailAddress =
-    data?.EmailAddress ??
-    data?.emailAddress ??
-    null;
- 
+    data?.Employee ?? data?.employee ?? {};
+
+  const phoneNumber = data?.PhoneNumber ?? data?.phoneNumber ?? null;
+  const emailAddress = data?.EmailAddress ?? data?.emailAddress ?? null;
+
   const departmentHistoriesRaw =
     data?.EmployeeDepartmentHistories ??
     data?.employeeDepartmentHistories ??
     employeeCore?.EmployeeDepartmentHistories ??
-    employeeCore?.employeeDepartmentHistories ??
-    [];
- 
+    employeeCore?.employeeDepartmentHistories ?? [];
+
   const payHistoriesRaw =
     data?.EmployeePayHistories ??
     data?.employeePayHistories ??
     employeeCore?.EmployeePayHistories ??
-    employeeCore?.employeePayHistories ??
-    [];
- 
+    employeeCore?.employeePayHistories ?? [];
+
   const employeeDepartmentHistories = departmentHistoriesRaw.map(normalizeDeptHistory);
   const employeePayHistories = payHistoriesRaw.map(normalizePayHistory);
- 
-  return normalizeEmployee(employeeCore, {
+
+  // Read names from API (support both casings)
+  const firstName = data?.FirstName ?? data?.firstName ?? null;
+  const lastName  = data?.LastName ?? data?.lastName ?? null;
+
+  // Build the normalized core (your existing behavior)
+  const core = normalizeEmployee(employeeCore, {
     phoneNumber,
     emailAddress,
     employeeDepartmentHistories,
     employeePayHistories,
   });
+
+  // ✅ Ensure the new fields are actually on the returned object
+  const merged = {
+    ...core,
+    // attach names at the top-level
+    firstName,
+    lastName,
+  };
+
+  // Debug once
+  // console.log('[api] getEmployee merged:', merged);
+
+  return merged;
 }
+
 
 
 /**
@@ -587,6 +596,10 @@ function normalizeDeptHistory(item = {}) {
     departmentID: item.DepartmentID ?? item.departmentID,
     startDate: item.StartDate ?? item.startDate,
     endDate: item.EndDate ?? item.endDate ?? null,
+    departmentName:
+      item.DepartmentName ?? item.departmentName ??
+      item.Department?.Name ?? item.department?.name ?? null,
+
   };
 }
  
