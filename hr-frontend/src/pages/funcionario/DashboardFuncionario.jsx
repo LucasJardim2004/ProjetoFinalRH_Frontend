@@ -8,14 +8,11 @@ import {
   patchDepartmentHistoryEndDate,
   createDepartmentHistory,
   createPayHistory,
+  replacePhoneNonAtomic as replacePhoneApi
 } from "../../services/apiClient";
-
 import "./dashboardFuncionario.css";
-
 import "ag-grid-community/styles/ag-grid.css";
-
 import { useAuth } from "/src/AuthProvider.jsx";
-
 import { ModuleRegistry, AllCommunityModule, themeQuartz } from "ag-grid-community";
 ModuleRegistry.registerModules([AllCommunityModule]); 
 import { AgGridReact } from "ag-grid-react";
@@ -672,6 +669,27 @@ export default function DashboardFuncionario() {
     setEmp((prev) => ({ ...prev, emailAddress: dto?.EmailAddress ?? newEmail ?? null }));
   }
 
+
+
+async function savePhone(newPhone) {
+  const oldPhone = emp.phoneNumber; // current value from DB
+  const newPhoneTrimmed = (newPhone ?? "").trim();
+  // Use the type that came from the API; fallback to 1 only if null
+  const typeId = Number.isInteger(emp.phoneNumberTypeID) ? emp.phoneNumberTypeID : 1;
+
+  console.log("[Dashboard.savePhone] replacing:", {
+    businessEntityID: emp.businessEntityID,
+    oldPhone,
+    newPhone: newPhoneTrimmed,
+    phoneNumberTypeID: typeId,
+  });
+
+  await replacePhoneApi(emp.businessEntityID, oldPhone, newPhoneTrimmed, typeId);
+  await reloadEmployee();
+}
+
+
+
   /* Dept EndDate (renderer) */
 
   const onSaveDepartmentEndDate = React.useCallback(async (rowData, newDate) => {
@@ -879,11 +897,17 @@ const currentDepartment = useMemo(() => {
 
                 <EditableField label="Hire Date" value={emp.hireDate ? new Date(emp.hireDate) : null} renderValue={(v) => formatDate(v, DISPLAY_LOCALE)} type="date" onSave={saveHireDate} parse={(d) => d} validate={(d) => (d && !isValidDate(d) ? "Hire date is invalid." : null)} disabled={user?.roles?.[0] !== "HR"} />
                 <EditableField label="Email" value={emp.emailAddress ?? ""} type="text" validate={(v) => v && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) ? "Invalid email format" : null} onSave={saveEmail} />
-
-                <div className="detail-item">
-                  <span className="label">Phone</span>
-                  <span className="value">{emp.phoneNumber ?? "—"}</span>
-                </div>
+                
+                
+                <EditableField
+                  label="Phone"
+                  value={emp.phoneNumber ?? ""}
+                  type="text"
+                  validate={(v) =>
+                    v && !/^[+0-9()\-.\s]{6,25}$/.test(v) ? "Invalid phone format" : null
+                  }
+                  onSave={savePhone}
+                />
               </div>
             </section>
 

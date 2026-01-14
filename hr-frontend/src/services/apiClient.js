@@ -330,6 +330,7 @@ export async function getEmployee(id) {
 
   const phoneNumber = data?.PhoneNumber ?? data?.phoneNumber ?? null;
   const emailAddress = data?.EmailAddress ?? data?.emailAddress ?? null;
+  const phoneNumberTypeID = data?.PhoneNumberTypeID ?? data?.phoneNumberTypeID ?? null;
 
   const departmentHistoriesRaw =
     data?.EmployeeDepartmentHistories ??
@@ -364,6 +365,7 @@ export async function getEmployee(id) {
     // attach names at the top-level
     firstName,
     lastName,
+    phoneNumberTypeID
   };
 
   // Debug once
@@ -636,3 +638,42 @@ function normalizeEmployee(obj = {}, extras = {}) {
 }export async function me() {
   return apiFetch("/Auth/me"); 
 }
+
+
+/**
+ * PersonPhone
+ * Controller: PersonPhoneController
+ * Route base: api/v1/EmployeePayHistory
+ */ 
+export function createPersonPhone(dto) {
+  return apiFetch(`/PersonPhone`, { method: "POST", body: dto });
+}
+
+export function deletePersonPhone(businessEntityID, phoneNumber, phoneNumberTypeID) {
+  return apiFetch(`/PersonPhone/${businessEntityID}/${encodeURIComponent(phoneNumber)}/${phoneNumberTypeID}`, {
+    method: "DELETE"
+  });
+}
+
+export async function replacePhoneNonAtomic(businessEntityID, oldPhoneNumber, newPhoneNumber, phoneNumberTypeID) {
+  console.log("[apiClient.replacePhone] deleting old:", { businessEntityID, oldPhoneNumber, phoneNumberTypeID });
+  try {
+    // Try to delete exact composite key; ignore if missing
+    await deletePersonPhone(businessEntityID, oldPhoneNumber, phoneNumberTypeID);
+  } catch (err) {
+    if (String(err?.message || "").includes("API error (404)")) {
+      console.warn("[apiClient.replacePhone] delete returned 404 (no existing phone) — continuing");
+    } else {
+      throw err;
+    }
+  }
+
+  console.log("[apiClient.replacePhone] creating new:", { businessEntityID, newPhoneNumber, phoneNumberTypeID });
+  const dto = await createPersonPhone({
+    BusinessEntityID: Number(businessEntityID),
+    PhoneNumber: newPhoneNumber,
+    PhoneNumberTypeID: Number(phoneNumberTypeID),
+  });
+  return dto;
+}
+
