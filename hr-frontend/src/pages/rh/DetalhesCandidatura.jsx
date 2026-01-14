@@ -9,51 +9,63 @@ function DetalhesCandidatura() {
     const [firstName, ...lastNameParts] = candidate.fullName.trim().split(" ");
     const lastName = lastNameParts.join(" ");
 
-     const handleAccept = async () => {
+
+  const handleAccept = async () => {
     try {
-        console.log(candidate)
-        // 1. Create Employee
-        const employeeDto = {
+      if (!candidate) {
+        console.error("Candidate not found in navigation state");
+        return;
+      }
+
+      const [firstName, ...lastNameParts] = String(candidate.fullName || "").trim().split(" ");
+      const lastName = lastNameParts.join(" ");
+
+      // 1) Create Employee
+      const employeeDto = {
         PersonType: "EM",
         FirstName: firstName,
         LastName: lastName,
         EmailAddress: candidate.email,
         PhoneNumber: candidate.phoneNumber,
-        DepartmentId: 1,
+        DepartmentId: 1, // adjust if needed
         EmployeeDTO: {
-            JobTitle: "New Hire",
-            NationalIDNumber: candidate.nationalID,
-            BirthDate: candidate.birthDate,
-            Gender: candidate.gender,
-            MaritalStatus: candidate.maritalStatus,
-            HireDate: new Date().toISOString().split("T")[0],
+          JobTitle: "New Hire",
+          NationalIDNumber: candidate.nationalID,
+          BirthDate: candidate.birthDate,
+          Gender: candidate.gender,
+          MaritalStatus: candidate.maritalStatus,
+          HireDate: new Date().toISOString().split("T")[0],
         },
-        };
-        const employee = await createEmployee(employeeDto);
+      };
+      const employee = await createEmployee(employeeDto);
+      
+      const beid = employee?.BusinessEntityID ?? employee?.businessEntityID;
 
-        // 2. Register User
-        const registerDto = {
+      console.log("[accept] employee created BEID =", beid);
+
+      // 2) Register User (Register already gives "Employee" role)
+      const registerDto = {
         UserName: candidate.email.split("@")[0],
         Email: candidate.email,
         FullName: candidate.fullName,
-        BusinessEntityID: employee.BusinessEntityID,
-        Password: "Portugal2025!", // or generated
-        };
-        const registerResult = await registerEmployee(registerDto);
+        BusinessEntityID: beid,
+        Password: "Portugal2025!", // TODO: generate or let user set
+      };
+      const registerResult = await registerEmployee(registerDto);
+      console.log("[accept] register result", registerResult);
 
-        // 3. Ensure RoleID = 1 (Employee)
-        await updateUserRoles(registerResult.userId);
+      // 3) Delete Candidate records
+      await deleteCandidateInfo(candidate.id);
+      await deleteJobCandidate(jobCandidateID);
+      
 
-        // 4. Delete Candidate records
-        await deleteJobCandidate(jobCandidateID);
-        await deleteCandidateInfo(candidate.id);
-
-        // 5. Redirect
-        navigate("/Vagas");
+      // 4) Redirect
+      navigate("/Vagas");
     } catch (err) {
-        console.error("Error accepting candidate:", err);
+      console.error("Error accepting candidate:", err);
     }
-    };
+  };
+
  
   const handleRefuse = async () => {
     try {
