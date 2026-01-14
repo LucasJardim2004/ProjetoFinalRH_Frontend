@@ -14,10 +14,8 @@ import "ag-grid-community/styles/ag-theme-quartz.css";
 
 import "./ListaCandidaturas.css";
 
-import {
-  getCandidateInfosByOpening,
-  getCandidateCvUrl,
-} from "../../services/apiClient";
+import { getCandidateInfosByOpening } from "../../services/apiClient";
+import { downloadPdfFile } from "../../utils/fileDownload";
 /*adicionei*/
 function DetalhesButtonRenderer(props) {
   const navigate = useNavigate();
@@ -49,7 +47,10 @@ function DetalhesButtonRenderer(props) {
 }
 
 const CvButtonRenderer = (props) => {
-  const fileName = props.data?.resumeFile;
+  console.log(props.data)
+  const fileName = props.data?.cvFileName;
+  const fileBytes = props.data?.cvFile;
+
 
   if (!fileName) {
     return (
@@ -59,11 +60,9 @@ const CvButtonRenderer = (props) => {
     );
   }
 
-  const url = getCandidateCvUrl(fileName);
-
   const handleClick = () => {
-    if (!url) return;
-    window.open(url, "_blank", "noopener,noreferrer");
+    if (!fileBytes) return;
+    downloadPdfFile(fileName, fileBytes);
   };
 
   return (
@@ -112,10 +111,8 @@ function ListaCandidaturas() {
           birthDate: c.birthDate ? c.birthDate.slice(0, 10) : "",
           nationalID: c.nationalID,
           comment: c.comment,
-          resumeFile:
-            c.jobCandidate?.resumeFile ??
-            c.JobCandidate?.ResumeFile ??
-            null,
+          cvFileName: c.jobCandidate?.cvFileName ?? null,
+          cvFile: c.jobCandidate?.cvFile ?? null,
         }));
 
         setRowData(mapped);
@@ -173,7 +170,7 @@ function ListaCandidaturas() {
     },
     {
       headerName: "CV",
-      field: "resumeFile",
+      field: "CVFileName",
       maxWidth: 140,
       cellRenderer: CvButtonRenderer,
     },

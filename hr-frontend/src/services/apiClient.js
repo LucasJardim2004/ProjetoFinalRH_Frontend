@@ -268,12 +268,11 @@ export function createJobCandidate(candidateDto) {
   });
 }
 
-export async function uploadCandidateCv(file, nationalId) {
+export async function uploadCandidateCv(id, file) {
   const formData = new FormData();
   formData.append("file", file);
-  formData.append("nationalId", nationalId);
 
-  const response = await fetch(`${API_BASE_URL}/JobCandidate/upload-cv`, {
+  const response = await fetch(`${API_BASE_URL}/JobCandidate/upload-cv/${id}`, {
     method: "POST",
     body: formData,
   });
@@ -308,13 +307,13 @@ export function updateJobCandidate(id, candidatePartial) {
   });
 } */
 
-// Build a URL to download a candidate CV by file name
-export function getCandidateCvUrl(fileName) {
-  if (!fileName) return null;
-  return `${API_BASE_URL}/JobCandidate/download-cv/${encodeURIComponent(
-    fileName
-  )}`;
-}
+// // Build a URL to download a candidate CV by file name
+// export function getCandidateCvUrl(fileName) {
+//   if (!fileName) return null;
+//   return `${API_BASE_URL}/JobCandidate/download-cv/${encodeURIComponent(
+//     fileName
+//   )}`;
+// }
 
 
 /**
