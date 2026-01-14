@@ -77,24 +77,22 @@ function Candidatura() {
           ? nameParts.slice(1, nameParts.length - 1).join(" ")
           : "";
 
-      console.log("[Candidatura] before uploadCandidateCv");
-      const uploadResult = await uploadCandidateCv(cvFile, nationalID);
-      console.log("[Candidatura] uploadResult", uploadResult);
-
-      const resumeFileName = uploadResult.fileName;
 
       console.log("[Candidatura] before createJobCandidate");
       const jobCandidatePayload = {
         businessEntityID: null,
-        resume: null,
-        resumeFile: resumeFileName,
+        resume: null
       };
+
       const createdJobCandidate = await createJobCandidate(jobCandidatePayload);
       console.log("[Candidatura] createdJobCandidate", createdJobCandidate);
 
       const jobCandidateID =
-        createdJobCandidate?.jobCandidateID ??
-        createdJobCandidate?.JobCandidateID;
+        createdJobCandidate?.jobCandidateID;
+
+      console.log("[Candidatura] before uploadCandidateCv");
+      const uploadResult = await uploadCandidateCv(jobCandidateID, cvFile);
+      console.log("[Candidatura] uploadResult", uploadResult);
 
       if (!jobCandidateID) {
         throw new Error(
