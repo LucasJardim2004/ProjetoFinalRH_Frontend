@@ -49,6 +49,7 @@ const ApplyCellRenderer = (props) => {
       alert("Could not detect opening ID for this row.");
       return;
     }
+    console.log("Deleting opening with ID:", data.openingID);
     onDelete(data.openingID);
   };
 
@@ -132,7 +133,14 @@ function Vagas() {
       alert("Opening deleted successfully.");
     } catch (err) {
       console.error("Error deleting opening:", err);
-      alert("Error deleting opening. Check console for details.");
+      const responseData = err?.response?.data ?? err?.data;
+      const apiMessage = responseData?.message ?? 
+      (typeof responseData === "string" ? responseData : null) ??
+      err?.message ?? null;
+
+      console.error("API error data:", responseData);
+      console.error("Full message:", apiMessage);
+      alert(apiMessage || "Error deleting opening. Please try again later.");
     }
   }
 

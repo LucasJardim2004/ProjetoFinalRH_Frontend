@@ -16,6 +16,32 @@ function Candidatura() {
   const jobTitleFromState = location.state?.jobTitle || "";
   const openingIDFromState = location.state?.openingID;
 
+  const [birthDateValue, setBirthDateValue] = useState("");
+  const [birthDateError, setBirthDateError] = useState("");
+
+  function isAtLeast18YearsOld(dateString) {
+    const today = new Date();
+    const birthDate = new Date(dateString);
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+
+    return age >= 18;
+  }
+
+  function handleBirthDateChange(e) {
+    const value = e.target.value;
+    setBirthDateValue(value);
+    if(value && !isAtLeast18YearsOld(value)) {
+      setBirthDateError("You must be at least 18 years old to apply.");
+    } else {
+      setBirthDateError("");
+    }
+  }
+
   function handleFileChange(e) {
     const file = e.target.files && e.target.files[0];
     setCvName(file ? file.name : "No file selected");
@@ -224,7 +250,11 @@ function Candidatura() {
                   name="birthdate"
                   type="date"
                   required
+                  value = {birthDateValue}
+                  onChange = {handleBirthDateChange}
+                  aria-invalid={!!birthDateError}
                 />
+                {birthDateError && (<small className="field-error">{birthDateError}</small>)}
               </div>
 
               <div className="form-group">
@@ -269,7 +299,7 @@ function Candidatura() {
             </div>
           </section>
 
-          {/* CV */}
+          {/* CV */} 
           <section className="form-section">
             <h2>Curriculum Vitae</h2>
             <div className="form-group">
