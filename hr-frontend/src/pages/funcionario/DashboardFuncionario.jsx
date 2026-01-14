@@ -26,7 +26,41 @@ const myTheme = themeQuartz.withParams({
   accentColor: "#0E74A1",
 });
 
+function toLocalYmd(dateLike) {
+  if (!dateLike) return "";
+  const d = normalizeToDate(dateLike);
+  if (!d) return "";
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+
 const DISPLAY_LOCALE = "pt-PT";
+
+    function validateEndDate(d, data) {
+      // 1) Forbid clearing
+      if (!d) return "Clearing EndDate is not supported.";
+
+      // 2) Ensure valid date
+      const endDate = normalizeToDate(d);
+      if (!isValidDate(endDate)) return "End date is invalid.";
+
+      // 3) Compare to start date if present
+      const startRaw = data?.startDate ?? data?.StartDate ?? null;
+      if (startRaw) {
+        const startDate = normalizeToDate(startRaw);
+        if (isValidDate(startDate)) {
+          const s = toLocalYmd(startDate); // "YYYY-MM-DD"
+          const e = toLocalYmd(endDate);   // "YYYY-MM-DD"
+          if (s && e && e < s) {
+            return "End date cannot be before start date.";
+          }
+        }
+      }
+      return null;
+    }
 
 function formatDate(value, locale = DISPLAY_LOCALE) {
   if (!value) return "—";
@@ -52,24 +86,35 @@ function formatPayFrequency(value) {
   if (value === 2) return "Biweekly";
   return value != null ? String(value) : "—";
 }
-function toISODateOnly(value) {
-  if (!value) return "";
-  const d = typeof value === "string" ? new Date(value) : value;
-  if (isNaN(d.getTime())) return "";
-  const yyyy = d.getFullYear();
-  const mm = String(d.getMonth() + 1).padStart(2, "0");
-  const dd = String(d.getDate()).padStart(2, "0");
-  return `${yyyy}-${mm}-${dd}`;
+
+function toISODateOnly(date) {
+  if (!date) return "";
+  if (typeof date === "string") return date; // already in correct format
+  return date.toISOString().split("T")[0]; // "YYYY-MM-DD"
 }
+
 function fromDateInput(value) {
   if (!value) return null;
-  const [y, m, d] = value.split("-").map(Number);
-  const dt = new Date(y, m - 1, d);
-  return isNaN(dt.getTime()) ? null : dt;
+  return new Date(value); // converts "YYYY-MM-DD" back to Date
 }
+
 function isValidDate(d) {
   return d instanceof Date && !isNaN(d.getTime());
 }
+
+// Turns "YYYY-MM-DD" (or Date-like) into a Date at local midnight.
+function normalizeToDate(dateLike) {
+  if (!dateLike) return null;
+  if (dateLike instanceof Date) return new Date(dateLike.getTime());
+  if (typeof dateLike === "string") {
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateLike);
+    if (match) return new Date(+match[1], +match[2] - 1, +match[3]);
+    const parsed = new Date(dateLike);
+    return isValidDate(parsed) ? parsed : null;
+  }
+  return null;
+}
+
 
 function EditIconButton({ onClick, title = "Edit" }) {
   return (
@@ -92,11 +137,12 @@ function EditIconButton({ onClick, title = "Edit" }) {
   );
 }
 
+
 function EditableField({
   label,
   value,
   renderValue,
-  type = "text", 
+  type = "text",
   options = [],
   onSave,
   disabled = false,
@@ -113,7 +159,7 @@ function EditableField({
   }, [value]);
 
   function startEdit() {
-    if (disabled || saving) return;
+    if (disabled || saving) return; // Prevent editing if disabled
     setError(null);
     setLocal(value ?? "");
     setEditing(true);
@@ -161,7 +207,9 @@ function EditableField({
         {!editing ? (
           <>
             <span>{renderValue ? renderValue(value) : (value ?? "—")}</span>
-            <EditIconButton onClick={startEdit} title={`Edit ${label}`} />
+            {!disabled && (
+              <EditIconButton onClick={startEdit} title={`Edit ${label}`} />
+            )}
           </>
         ) : (
           <>
@@ -171,7 +219,7 @@ function EditableField({
                 value={local ?? ""}
                 onChange={(e) => setLocal(e.target.value)}
                 style={{ flex: 1, padding: 6 }}
-                disabled={saving}
+                disabled={saving || disabled}
               />
             )}
 
@@ -180,7 +228,7 @@ function EditableField({
                 type="date"
                 value={toISODateOnly(local)}
                 onChange={(e) => setLocal(fromDateInput(e.target.value))}
-                disabled={saving}
+                disabled={saving || disabled}
               />
             )}
 
@@ -188,7 +236,7 @@ function EditableField({
               <select
                 value={local ?? ""}
                 onChange={(e) => setLocal(e.target.value)}
-                disabled={saving}
+                disabled={saving || disabled}
               >
                 <option value="" disabled>Select…</option>
                 {options.map((opt) => (
@@ -202,7 +250,7 @@ function EditableField({
             <button
               type="button"
               onClick={commit}
-              disabled={saving || unchanged}
+              disabled={saving || unchanged || disabled}
               className="btn btn-primary"
               style={{ marginLeft: 8 }}
             >
@@ -228,6 +276,7 @@ function EditableField({
     </div>
   );
 }
+
 
 function DeptEndDateCellRenderer(props) {
   const { value, data, onSaveEndDate, api } = props;
@@ -261,23 +310,9 @@ function DeptEndDateCellRenderer(props) {
     setEditing(false);
   }
 
-  function validateEndDate(d) {
-    if (!d) return "Clearing EndDate is not supported.";
-    if (!isValidDate(d)) return "End date is invalid.";
 
-    const startRaw = data?.startDate ?? data?.StartDate ?? null;
-    if (startRaw) {
-      const start = new Date(startRaw);
-      if (isValidDate(start)) {
-        const s = toISODateOnly(start);
-        const e = toISODateOnly(d);
-        if (s && e && e < s) {
-          return "End date cannot be before start date.";
-        }
-      }
-    }
-    return null;
-  }
+
+
 
   const unchanged = React.useMemo(() => {
     return toISODateOnly(initialDate) === toISODateOnly(local);
@@ -564,8 +599,6 @@ export default function DashboardFuncionario() {
   const [showAddPayModal, setShowAddPayModal] = useState(false);
   const { user, loading: authLoading } = useAuth();
 
-  console.log(user);
-
   const roles = Array.isArray(user?.roles) ? user.roles : [];
   const isHR = roles[0] === "HR";
 
@@ -640,35 +673,74 @@ export default function DashboardFuncionario() {
   }
 
   /* Dept EndDate (renderer) */
+
   const onSaveDepartmentEndDate = React.useCallback(async (rowData, newDate) => {
-    if (!newDate || !isValidDate(newDate)) {
+    // Normalize first
+    const endDate = normalizeToDate(newDate);
+    if (!isValidDate(endDate)) {
       throw new Error("End date is invalid.");
     }
-    const endYmd = toISODateOnly(newDate);
+
+    // Build YYYY-MM-DD (local) for backend
+    const endYmd = toLocalYmd(endDate);
     if (!endYmd) throw new Error("Unable to convert end date.");
 
-    await patchDepartmentHistoryEndDate(Number(emp.businessEntityID), rowData, endYmd);
-    await reloadEmployee(); // canonical refresh
+    // Optional: run the same validation here for safety
+    const v = validateEndDate(endDate, rowData);
+    if (v) throw new Error(v);
+
+    await patchDepartmentHistoryEndDate(
+      Number(emp.businessEntityID),
+      rowData,
+      endYmd
+    );
+    await reloadEmployee();
   }, [emp?.businessEntityID, reloadEmployee]);
 
+
   /* Create Department Movement */
+
   const handleAddDepartmentMovement = React.useCallback(async (departmentID, startDate) => {
     const startYmd = toISODateOnly(startDate);
+    const histories = emp?.employeeDepartmentHistories ?? [];
 
-    // Duplicate guard
-    const exists = (emp?.employeeDepartmentHistories ?? []).some(
+    
+    const hasOpenMovement = histories.some((h) => {
+      const end = h.endDate;
+      return end == null || (typeof end === "string" && end.trim() === "");
+    });
+
+    if (hasOpenMovement) {
+      // IMPORTANT: throw, do NOT return a string
+      throw new Error("There's already an open movement. Close it before adding a new one.");
+    }
+
+
+
+    // Guard 2: duplicate prevention (same departmentID and startDate)
+    const startDupExists = histories.some(
       (r) =>
         String(r.departmentID) === String(departmentID) &&
         toISODateOnly(r.startDate) === startYmd
     );
-    if (exists) {
+
+    if (startDupExists) {
       throw new Error("A movement with this DepartmentID and Start Date already exists.");
     }
 
-    setShowAddDeptModal(false);
+    
     await createDepartmentHistory(emp.businessEntityID, departmentID, startYmd);
+
+    // Option A: server is source of truth — refresh canonical data
     await reloadEmployee();
-  }, [emp?.businessEntityID, emp?.employeeDepartmentHistories, reloadEmployee]);
+
+    // ✅ Close modal AFTER success
+    setShowAddDeptModal(false);
+  },
+  [emp?.businessEntityID, emp?.employeeDepartmentHistories, reloadEmployee]
+);
+
+
 
   /* Create Pay History (Rate + Frequency only; server sets RateChangeDate = now) */
   const handleAddPayHistory = React.useCallback(async (rate, payFrequency) => {
@@ -679,28 +751,37 @@ export default function DashboardFuncionario() {
 
   /* AG Grid configuration */
   const defaultColDef = useMemo(() => ({
-    sortable: true,
-    filter: true,
+    sortable: false,
+    filter: false,
     resizable: true,
     flex: 1,
     editable: false,
+    minWidth: 140
   }), []);
 
-  const deptCols = useMemo(() => [
-    { field: "departmentID", headerName: "Department ID", maxWidth: 140 },
-    { field: "startDate", headerName: "Start", valueFormatter: (p) => formatDate(p.value, DISPLAY_LOCALE), maxWidth: 140 },
-    {
-      field: "endDate",
-      headerName: "End",
-      maxWidth: 340,
-      cellRenderer: DeptEndDateCellRenderer,
-      cellRendererParams: { onSaveEndDate: onSaveDepartmentEndDate },
-    },
-    { headerName: "Status", valueGetter: (p) => (p.data?.endDate ? "Previous" : "Current"), maxWidth: 140 },
-  ], [onSaveDepartmentEndDate]);
+
+// DashboardFuncionario.jsx
+const deptCols = useMemo(() => [
+  { field: "departmentID", headerName: "Department ID", maxWidth: 140 },
+  {
+    headerName: "Department",
+    valueGetter: (p) => p.data?.departmentName ?? `#${p.data?.departmentID ?? "—"}`,
+    flex: 1,
+    minWidth: 180,
+  },
+  { field: "startDate", headerName: "Start", valueFormatter: (p) => formatDate(p.value, DISPLAY_LOCALE)},
+  {
+    field: "endDate",
+    headerName: "End",
+    cellRenderer: DeptEndDateCellRenderer,
+    cellRendererParams: { onSaveEndDate: onSaveDepartmentEndDate },
+  },
+  { headerName: "Status", valueGetter: (p) => (p.data?.endDate ? "Previous" : "Current")},
+], [onSaveDepartmentEndDate]);
+
 
   const payCols = useMemo(() => [
-    { field: "rateChangeDate", headerName: "Rate Change Date", valueFormatter: (p) => formatDate(p.value, DISPLAY_LOCALE), maxWidth: 180 },
+    { field: "rateChangeDate", headerName: "Rate Change Date", valueFormatter: (p) => formatDate(p.value, DISPLAY_LOCALE)},
     {
       field: "rate",
       headerName: "Rate (€/hour)",
@@ -708,14 +789,33 @@ export default function DashboardFuncionario() {
         typeof p.value === "number"
           ? p.value.toLocaleString(DISPLAY_LOCALE, { style: "currency", currency: "EUR" })
           : "—",
-      maxWidth: 180,
     },
-    { field: "payFrequency", headerName: "Frequency", valueFormatter: (p) => formatPayFrequency(p.value), maxWidth: 140 },
+    { field: "payFrequency", headerName: "Frequency", valueFormatter: (p) => formatPayFrequency(p.value)},
   ], []);
 
   const deptRowClassRules = useMemo(() => ({
     "row-current": (params) => !params.data?.endDate,
   }), []);
+
+  
+const currentDepartment = useMemo(() => {
+  const histories = emp?.employeeDepartmentHistories ?? [];
+  if (!histories.length) return null;
+
+  // Filter for open (endDate == null)
+  const open = histories.filter(h => !h.endDate);
+  if (open.length) {
+    // If multiple, pick the one with latest startDate
+    return open.sort((a, b) => new Date(b.startDate) - new Date(a.startDate))[0].departmentName ?? null;
+  }
+
+  // If no open, fallback to most recent by startDate
+  const latest = histories.sort((a, b) => new Date(b.startDate) - new Date(a.startDate))[0];
+  return latest?.departmentName ?? null;
+}, [emp]);
+
+
+  console.log(emp);
 
   return (
     <div className="vagas-page">
@@ -738,6 +838,17 @@ export default function DashboardFuncionario() {
             <section className="employee-details-section">
               <h2 className="section-title">General Information</h2>
 
+              
+              <div className="detail-item">
+                <span className="label">Name</span>
+                <span className="value">{emp.firstName + " " + emp.lastName ?? "—"}</span>
+              </div>
+
+              <div className="detail-item">
+                <span className="label">Department</span>
+                <span className="value">{currentDepartment}</span>
+              </div>
+
               <div className="employee-details-grid">
                 <div className="detail-item">
                   <span className="label">ID</span>
@@ -748,15 +859,25 @@ export default function DashboardFuncionario() {
                   <span className="value">{emp.nationalIDNumber ?? "—"}</span>
                 </div>
 
-                <EditableField label="Job Title" value={emp.jobTitle ?? ""} onSave={saveJobTitle} type="text" />
+                <EditableField label="Job Title" value={emp.jobTitle ?? ""} onSave={saveJobTitle} type="text" disabled={user?.roles?.[0] !== "HR"}/>
                 <EditableField label="Gender" value={emp.gender ?? ""} renderValue={(v) => formatGender(v)} type="select" options={[
                   { value: "M", label: "Male" }, { value: "F", label: "Female" },
                 ]} onSave={saveGender} />
                 <EditableField label="Marital Status" value={emp.maritalStatus ?? ""} renderValue={(v) => formatMaritalStatus(v)} type="select" options={[
                   { value: "M", label: "Married" }, { value: "S", label: "Single" },
-                ]} onSave={saveMaritalStatus} />
-                <EditableField label="Birth Date" value={emp.birthDate ? new Date(emp.birthDate) : null} renderValue={(v) => formatDate(v, DISPLAY_LOCALE)} type="date" onSave={saveBirthDate} parse={(d) => d} validate={(d) => (d && !isValidDate(d) ? "Birth date is invalid." : null)} />
-                <EditableField label="Hire Date" value={emp.hireDate ? new Date(emp.hireDate) : null} renderValue={(v) => formatDate(v, DISPLAY_LOCALE)} type="date" onSave={saveHireDate} parse={(d) => d} validate={(d) => (d && !isValidDate(d) ? "Hire date is invalid." : null)} />
+                ]} onSave={saveMaritalStatus} /> 
+                <EditableField
+                  label="Birth Date"
+                  value={emp.birthDate ? new Date(emp.birthDate) : null}
+                  renderValue={(v) => formatDate(v, DISPLAY_LOCALE)}
+                  type="date"
+                  onSave={saveBirthDate}
+                  parse={(d) => d}
+                  validate={(d) => (d && !isValidDate(d) ? "Birth date is invalid." : null)}
+                  disabled={user?.roles?.[0] !== "HR"} // <-- Non-HR users cannot edit
+                />
+
+                <EditableField label="Hire Date" value={emp.hireDate ? new Date(emp.hireDate) : null} renderValue={(v) => formatDate(v, DISPLAY_LOCALE)} type="date" onSave={saveHireDate} parse={(d) => d} validate={(d) => (d && !isValidDate(d) ? "Hire date is invalid." : null)} disabled={user?.roles?.[0] !== "HR"} />
                 <EditableField label="Email" value={emp.emailAddress ?? ""} type="text" validate={(v) => v && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) ? "Invalid email format" : null} onSave={saveEmail} />
 
                 <div className="detail-item">
@@ -786,7 +907,7 @@ export default function DashboardFuncionario() {
                   rowClassRules={deptRowClassRules}
                   rowHeight={64} 
                   headerHeight={40}
-                  pagination={true}
+                  pagination={false}
                   paginationPageSize={10}
                   domLayout="autoHeight"
                 />
@@ -812,7 +933,7 @@ export default function DashboardFuncionario() {
                   animateRows={true}
                   rowHeight={40}
                   headerHeight={40}
-                  pagination={true}
+                  pagination={false}
                   paginationPageSize={10}
                   domLayout="autoHeight"
                 />

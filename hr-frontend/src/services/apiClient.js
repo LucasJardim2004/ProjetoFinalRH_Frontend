@@ -321,48 +321,57 @@ export function updateJobCandidate(id, candidatePartial) {
  * Controller: EmployeeControler
  * Route base: api/v1/Employee
  */
+
 export async function getEmployee(id) {
   const data = await apiFetch(`/Employee/${id}`);
- 
+
   const employeeCore =
-    data?.Employee ??
-    data?.employee ??
-    {};
- 
-  const phoneNumber =
-    data?.PhoneNumber ??
-    data?.phoneNumber ??
-    null;
- 
-  const emailAddress =
-    data?.EmailAddress ??
-    data?.emailAddress ??
-    null;
- 
+    data?.Employee ?? data?.employee ?? {};
+
+  const phoneNumber = data?.PhoneNumber ?? data?.phoneNumber ?? null;
+  const emailAddress = data?.EmailAddress ?? data?.emailAddress ?? null;
+
   const departmentHistoriesRaw =
     data?.EmployeeDepartmentHistories ??
     data?.employeeDepartmentHistories ??
     employeeCore?.EmployeeDepartmentHistories ??
-    employeeCore?.employeeDepartmentHistories ??
-    [];
- 
+    employeeCore?.employeeDepartmentHistories ?? [];
+
   const payHistoriesRaw =
     data?.EmployeePayHistories ??
     data?.employeePayHistories ??
     employeeCore?.EmployeePayHistories ??
-    employeeCore?.employeePayHistories ??
-    [];
- 
+    employeeCore?.employeePayHistories ?? [];
+
   const employeeDepartmentHistories = departmentHistoriesRaw.map(normalizeDeptHistory);
   const employeePayHistories = payHistoriesRaw.map(normalizePayHistory);
- 
-  return normalizeEmployee(employeeCore, {
+
+  // Read names from API (support both casings)
+  const firstName = data?.FirstName ?? data?.firstName ?? null;
+  const lastName  = data?.LastName ?? data?.lastName ?? null;
+
+  // Build the normalized core (your existing behavior)
+  const core = normalizeEmployee(employeeCore, {
     phoneNumber,
     emailAddress,
     employeeDepartmentHistories,
     employeePayHistories,
   });
+
+  // ✅ Ensure the new fields are actually on the returned object
+  const merged = {
+    ...core,
+    // attach names at the top-level
+    firstName,
+    lastName,
+  };
+
+  // Debug once
+  // console.log('[api] getEmployee merged:', merged);
+
+  return merged;
 }
+
 
 
 /**
@@ -469,29 +478,59 @@ export async function patchEmail(id, emailAddress) {
  * Controller: EmployeeDepartmentHistoryController
  * Route base: api/v1/EmployeeDepartmentHistory
  */ 
+
+// --- Minimal local date helpers (avoid UTC shift) ---
+function isValidDate(d) {
+  return d instanceof Date && !isNaN(d.getTime());
+}
+function normalizeToDate(dateLike) {
+  if (!dateLike) return null;
+  if (dateLike instanceof Date) return new Date(dateLike.getTime());
+  if (typeof dateLike === "string") {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateLike);
+    if (m) return new Date(+m[1], +m[2] - 1, +m[3]); // local midnight
+    const parsed = new Date(dateLike);
+    return isValidDate(parsed) ? parsed : null;
+  }
+  return null;
+}
+function toLocalYmd(dateLike) {
+  const d = normalizeToDate(dateLike);
+  if (!isValidDate(d)) return "";
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+// --- Your API method (patched) ---
 export async function patchDepartmentHistoryEndDate(id, startDateOrRow, endDateYmd) {
   if (!endDateYmd) {
     throw new Error("EndDate cannot be empty.");
   }
- 
-  const encodedStart = encodeDateKeyForRoute(startDateOrRow);
- 
+
+  // Accept either a row object or a date/string for the start key
+  const ymd = toLocalYmd(
+    startDateOrRow?.startDate ??
+    startDateOrRow?.StartDate ??
+    startDateOrRow
+  );
+  if (!ymd) throw new Error("StartDate (row) is missing or invalid.");
+
+  const encodedStart = encodeURIComponent(ymd);
+
   const body = {
     BusinessEntityID: Number(id),
-    EndDate: endDateYmd, 
+    EndDate: endDateYmd, // expected "YYYY-MM-DD"
   };
- 
+
   const dto = await apiFetch(`/EmployeeDepartmentHistory/${id}_${encodedStart}`, {
     method: "PATCH",
     body,
   });
- 
-  return {
-       departmentID: dto?.DepartmentID ?? dto?.departmentID,
-    startDate: dto?.StartDate ?? dto?.startDate,
-    endDate: dto?.EndDate ?? dto?.endDate ?? endDateYmd,
-  };
+  return dto;
 }
+
  
 export async function createDepartmentHistory(businessEntityID, departmentID, startDateYmd) {
   if (!businessEntityID) throw new Error("BusinessEntityID is required.");
@@ -556,6 +595,10 @@ function normalizeDeptHistory(item = {}) {
     departmentID: item.DepartmentID ?? item.departmentID,
     startDate: item.StartDate ?? item.startDate,
     endDate: item.EndDate ?? item.endDate ?? null,
+    departmentName:
+      item.DepartmentName ?? item.departmentName ??
+      item.Department?.Name ?? item.department?.name ?? null,
+
   };
 }
  
