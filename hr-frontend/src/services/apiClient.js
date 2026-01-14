@@ -94,14 +94,43 @@ export async function apiFetch(path, options = {}) {
   }
 
   if (!response.ok) {
-    let errorText = "Unknown error";
-    try {
-      errorText = await response.text();
-    } catch {
-      // ignore
+  const contentType = response.headers.get("content-type") || "";
+
+  let data = undefined;
+  let rawText = "";
+
+  // Prefer JSON when available, otherwise fall back to text
+  try {
+    if (contentType.includes("application/json")) {
+      data = await response.json();
+    } else {
+      rawText = await response.text();
+      // If backend sends JSON but without content-type, try to parse it
+      try {
+        data = JSON.parse(rawText);
+      } catch {
+        // leave as text
+      }
     }
-    throw new Error(`API error (${response.status}): ${errorText}`);
+  } catch {
+    try {
+      rawText = await response.text();
+    } catch {
+      rawText = "";
+    }
   }
+
+  const message =
+    (data && typeof data === "object" && data.message) ||
+    (typeof data === "string" ? data : null) ||
+    rawText ||
+    `API error (${response.status})`;
+
+  const err = new Error(message);
+  err.status = response.status;
+  err.data = data;
+  throw err;
+}
 
   const text = await response.text();
   return text ? JSON.parse(text) : null;
