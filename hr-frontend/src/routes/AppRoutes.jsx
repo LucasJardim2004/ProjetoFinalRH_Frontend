@@ -28,7 +28,8 @@ function AppRoutes() {
         <Routes>
           {/* Rotas públicas */}
           <Route path="/login" element={<Login />} />
-          <Route path="/vagas" element={<Vagas />} />
+          <Route element={<AppLayout />}><Route path="/vagas" element={<Vagas />} /></Route>
+          
           <Route path="/candidatura" element={<Candidatura />} />
 
           {/* Rotas autenticadas */}
