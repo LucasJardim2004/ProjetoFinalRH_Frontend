@@ -18,6 +18,8 @@ import { getEmployees } from "../../services/apiClient";
 
 import { useAuth } from "../../AuthProvider.jsx"
 
+import TextField from "@mui/material/TextField";
+
 const ApplyCellRenderer = (props) => {
   const navigate = useNavigate();
   const { data, onDelete } = props;
@@ -117,6 +119,14 @@ function ListaFuncionarios() {
       </div>
 
       <div className="vagas-card">
+        <div className="search">
+          <TextField
+            id="outlined-basic"
+            variant="outlined"
+            fullWidth
+            label="Search"
+          />
+        </div>
         <div className="ag-theme-quartz vagas-grid-wrapper">
           <AgGridReact
             rowData={rowData}

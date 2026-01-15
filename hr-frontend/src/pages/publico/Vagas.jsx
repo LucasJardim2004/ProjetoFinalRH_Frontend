@@ -132,7 +132,9 @@ function Vagas() {
       alert("Opening deleted successfully.");
     } catch (err) {
       console.error("Error deleting opening:", err);
-      alert("Error deleting opening. Check console for details.");
+      const apiMessage = err?.response?.data?.message;
+      console.error("API message:", apiMessage);
+      alert(apiMessage || "Error deleting opening. Check console for details.");
     }
   }
 
