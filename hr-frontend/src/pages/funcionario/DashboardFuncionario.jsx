@@ -874,7 +874,7 @@ const currentDepartment = useMemo(() => {
                   <span className="value">{emp.nationalIDNumber ?? "—"}</span>
                 </div>
 
-                <EditableField label="Job Title" value={emp.jobTitle ?? ""} onSave={saveJobTitle} type="text" disabled={user?.roles?.[0] !== "HR"}/>
+                <EditableField label="Job Title" value={emp.jobTitle ?? ""} onSave={saveJobTitle} type="text" disabled={user?.roles?.[0] !== "HR" || String(emp?.businessEntityID) === String(user?.businessEntityID)} />
                 <EditableField label="Gender" value={emp.gender ?? ""} renderValue={(v) => formatGender(v)} type="select" options={[
                   { value: "M", label: "Male" }, { value: "F", label: "Female" },
                 ]} onSave={saveGender} />
@@ -889,11 +889,11 @@ const currentDepartment = useMemo(() => {
                   onSave={saveBirthDate}
                   parse={(d) => d}
                   validate={(d) => (d && !isValidDate(d) ? "Birth date is invalid." : null)}
-                  disabled={user?.roles?.[0] !== "HR"} // <-- Non-HR users cannot edit
+                  disabled={user?.roles?.[0] !== "HR" || String(emp?.businessEntityID) === String(user?.businessEntityID)} // <-- Non-HR users cannot edit
                 />
 
-                <EditableField label="Hire Date" value={emp.hireDate ? new Date(emp.hireDate) : null} renderValue={(v) => formatDate(v, DISPLAY_LOCALE)} type="date" onSave={saveHireDate} parse={(d) => d} validate={(d) => (d && !isValidDate(d) ? "Hire date is invalid." : null)} disabled={user?.roles?.[0] !== "HR"} />
-                <EditableField label="Email" value={emp.emailAddress ?? ""} type="text" validate={(v) => v && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) ? "Invalid email format" : null} onSave={saveEmail} />
+                <EditableField label="Hire Date" value={emp.hireDate ? new Date(emp.hireDate) : null} renderValue={(v) => formatDate(v, DISPLAY_LOCALE)} type="date" onSave={saveHireDate} parse={(d) => d} validate={(d) => (d && !isValidDate(d) ? "Hire date is invalid." : null)} disabled={user?.roles?.[0] !== "HR" || String(emp?.businessEntityID) === String(user?.businessEntityID)} />
+                <EditableField label="Email" value={emp.emailAddress ?? ""} type="text" validate={(v) => v && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) ? "Invalid email format" : null} onSave={saveEmail} disabled={user?.roles?.[0] !== "HR" || String(emp?.businessEntityID) === String(user?.businessEntityID)}/>
                 
                 
                 <EditableField
