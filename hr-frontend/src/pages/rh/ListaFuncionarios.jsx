@@ -1,10 +1,13 @@
 import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 // AG Grid core + módulos
+
 import { ModuleRegistry, AllCommunityModule } from "ag-grid-community";
 ModuleRegistry.registerModules([AllCommunityModule]);
 
+import { TextField } from "@mui/material";
 import { TextField } from "@mui/material";
 
 // AG Grid React wrapper
@@ -44,6 +47,7 @@ const ApplyCellRenderer = (props) => {
 function ListaFuncionarios() {
   const [rowData, setRowData] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -54,6 +58,7 @@ function ListaFuncionarios() {
         const mapped = employees.map((e) => ({
           businessEntityID: e.businessEntityID,
           jobTitle: e.jobTitle,
+          nationalIDNumber: e.nationalIDNumber ?? "",
           nationalIDNumber: e.nationalIDNumber ?? "",
           gender: e.gender,
           maritalStatus: e.maritalStatus,
@@ -81,6 +86,28 @@ function ListaFuncionarios() {
     });
   }, [rowData, searchQuery]);
 
+  const filteredRowData = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return rowData;
+
+    return rowData.filter((row) => {
+      const nid = (row.nationalIDNumber ?? "").toString().toLowerCase();
+      const jobTitle = (row.jobTitle ?? "").toString().toLowerCase();
+      return nid.includes(q) || jobTitle.includes(q);
+    });
+  }, [rowData, searchQuery]);
+
+  const filteredRowData = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return rowData;
+
+    return rowData.filter((row) => {
+        const nid = (row.nationalIDNumber ?? "").toString().toLowerCase();
+        const jobTitle = (row.jobTitle ?? "").toString().toLowerCase();
+        return nid.includes(q) || jobTitle.includes(q);
+      });
+    }, [rowData, searchQuery]);
+
   const defaultColDef = {
     sortable: false,
     filter: true,
@@ -93,6 +120,12 @@ function ListaFuncionarios() {
       field: "jobTitle",
       headerName: "Job Title",
       flex: 1.2,
+    },
+    {
+      field: "nationalIDNumber",
+      headerName: "National ID",
+      flex: 1,
+      maxWidth: 150,
     },
     {
       field: "nationalIDNumber",
@@ -148,9 +181,43 @@ function ListaFuncionarios() {
         <p className="no-results" style={{ fontWeight: "bold", color: "red" }}>No employees found.</p>
       )}
 
+      <div className="search">
+        <TextField
+          id="employee-search"
+          variant="outlined"
+          fullWidth
+          label="Search Employees"
+          placeholder="Type Job Title or National ID..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+      </div>
+      {filteredRowData.length === 0 && (
+        <p className="no-results" style={{ fontWeight: "bold", color: "red" }}>No employees found.</p>
+      )}
+
+      <div className="search">
+          <TextField
+            id="employee-search"
+            variant="outlined"
+            fullWidth
+            label="Search Employees"
+            placeholder="Type Job Title or National ID..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+        {filteredRowData.length === 0 && (
+          <p className="no-results">No employees found.</p>
+        )}
+
       <div className="vagas-card">
+        
+        
+
         <div className="ag-theme-quartz vagas-grid-wrapper">
           <AgGridReact
+            rowData={filteredRowData}
             rowData={filteredRowData}
             columnDefs={colDefs}
             defaultColDef={defaultColDef}
