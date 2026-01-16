@@ -6,6 +6,7 @@ import {
   createCandidateInfo,
   createJobCandidate,
   uploadCandidateCv,
+  apiFetch
 } from "../../services/apiClient";
 
 function Candidatura() {
@@ -47,118 +48,106 @@ function Candidatura() {
     setCvName(file ? file.name : "No file selected");
   }
 
-  async function handleSubmit(e) {
-    e.preventDefault();
-    setSubmitting(true);
 
-    try {
-      console.log("[Candidatura] start submit");
+async function handleSubmit(e) {
+  e.preventDefault();
+  setSubmitting(true);
 
-      if (!openingIDFromState) {
-        alert(
-          "No opening ID associated with this application. Please start the application from the job openings page."
-        );
-        return;
-      }
-
-      const formData = new FormData(e.target);
-
-      const jobTitle = jobTitleFromState || formData.get("jobTitle") || "";
-      const fullName = (formData.get("nome") || "").toString().trim();
-      const email = (formData.get("email") || "").toString().trim();
-      const phoneNumber = (formData.get("telefone") || "").toString().trim();
-      const birthDateRaw = formData.get("birthdate") || "";
-      const nationalID = (formData.get("nationalId") || "").toString().trim();
-      const maritalStatus =
-        (formData.get("maritalStatus") || "").toString() || "";
-      const gender = (formData.get("gender") || "").toString() || "";
-      const comment = (formData.get("comentarios") || "").toString().trim();
-
-      const cvFile = formData.get("cv");
-
-      console.log("[Candidatura] form values", {
-        jobTitle,
-        fullName,
-        email,
-        phoneNumber,
-        birthDateRaw,
-        nationalID,
-        maritalStatus,
-        gender,
-        comment,
-        cvFile,
-      });
-
-      if (!(cvFile instanceof File)) {
-        alert("Please upload a valid CV file.");
-        return;
-      }
-
-      const nameParts = fullName.split(" ").filter(Boolean);
-      const firstName = nameParts[0] || "";
-      const lastName =
-        nameParts.length > 1 ? nameParts[nameParts.length - 1] : "";
-      const middleName =
-        nameParts.length > 2
-          ? nameParts.slice(1, nameParts.length - 1).join(" ")
-          : "";
-
-
-      console.log("[Candidatura] before createJobCandidate");
-      const jobCandidatePayload = {
-        businessEntityID: null,
-        resume: null
-      };
-
-      const createdJobCandidate = await createJobCandidate(jobCandidatePayload);
-      console.log("[Candidatura] createdJobCandidate", createdJobCandidate);
-
-      const jobCandidateID =
-        createdJobCandidate?.jobCandidateID;
-
-      console.log("[Candidatura] before uploadCandidateCv");
-      const uploadResult = await uploadCandidateCv(jobCandidateID, cvFile);
-      console.log("[Candidatura] uploadResult", uploadResult);
-
-      if (!jobCandidateID) {
-        throw new Error(
-          "Could not retrieve JobCandidateID from API response."
-        );
-      }
-
-      console.log("[Candidatura] before createCandidateInfo");
-      const candidateInfoPayload = {
-        jobCandidateID,
-        openingID: openingIDFromState,
-        jobTitle,
-        nationalID,
-        birthDate: birthDateRaw
-          ? new Date(birthDateRaw.toString()).toISOString()
-          : null,
-        maritalStatus,
-        gender,
-        firstName,
-        middleName,
-        lastName,
-        email,
-        phoneNumber,
-        comment,
-      };
-
-      const createdCandidateInfo = await createCandidateInfo(candidateInfoPayload);
-      console.log("[Candidatura] createdCandidateInfo", createdCandidateInfo);
-
-      alert("Application submitted successfully!");
-
-      e.target.reset();
-      setCvName("No file selected");
-    } catch (err) {
-      console.error("Error submitting application:", err);
-      alert(err.message || "There was an error submitting your application.");
-    } finally {
-      setSubmitting(false);
+  try {
+    if (!openingIDFromState) {
+      alert("No opening ID associated with this application. Please start the application from the job openings page.");
+      return;
     }
+
+    const formData = new FormData(e.target);
+    const jobTitle = jobTitleFromState ?? formData.get("jobTitle") ?? "";
+    const fullName = (formData.get("nome") ?? "").toString().trim();
+    const email = (formData.get("email") ?? "").toString().trim();
+    const phoneNumber = (formData.get("telefone") ?? "").toString().trim();
+    const birthDateRaw = formData.get("birthdate") ?? "";
+    const nationalID = (formData.get("nationalId") ?? "").toString().trim();
+    const maritalStatus = (formData.get("maritalStatus") ?? "").toString() ?? "";
+    const gender = (formData.get("gender") ?? "").toString() ?? "";
+    const comment = (formData.get("comentarios") ?? "").toString().trim();
+    const cvFile = formData.get("cv");
+
+    // ✅ Check if email already exists in Users table
+    try {
+      const response = await apiFetch(`/Auth/exists?email=${encodeURIComponent(email)}`);
+      if (response?.exists) {
+        alert("This email is already registered as a user. Please use a different email or log in.");
+        return;
+      }
+    } catch (err) {
+      console.warn("[handleSubmit] email uniqueness check failed:", err);
+    }
+
+    // ✅ Check if National ID already exists in Employee table
+    try {
+      const employees = await apiFetch("/Employee"); // or use getEmployees()
+      const conflict = (employees ?? []).find((emp) => {
+        const existingNid = emp.NationalIDNumber ?? emp.nationalIDNumber ?? emp.NationalId ?? emp.nationalId;
+        return existingNid && nationalID && String(existingNid).trim() === String(nationalID).trim();
+      });
+      if (conflict) {
+        alert("This National ID is already registered as an Employee. Please verify your information.");
+        return;
+      }
+    } catch (err) {
+      console.warn("[handleSubmit] National ID check failed:", err);
+    }
+
+    if (!(cvFile instanceof File)) {
+      alert("Please upload a valid CV file.");
+      return;
+    }
+
+    const nameParts = fullName.split(" ").filter(Boolean);
+    const firstName = nameParts[0] ?? "";
+    const lastName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : "";
+    const middleName = nameParts.length > 2 ? nameParts.slice(1, nameParts.length - 1).join(" ") : "";
+
+    // Create JobCandidate
+    const jobCandidatePayload = { businessEntityID: null, resume: null };
+    const createdJobCandidate = await createJobCandidate(jobCandidatePayload);
+    const jobCandidateID = createdJobCandidate?.jobCandidateID;
+    if (!jobCandidateID) throw new Error("Could not retrieve JobCandidateID from API response.");
+
+    // Upload CV
+    await uploadCandidateCv(jobCandidateID, cvFile);
+
+    // Create CandidateInfo
+    const candidateInfoPayload = {
+      jobCandidateID,
+      openingID: openingIDFromState,
+      jobTitle,
+      nationalID,
+      birthDate: birthDateRaw ? new Date(birthDateRaw.toString()).toISOString() : null,
+      maritalStatus,
+      gender,
+      firstName,
+      middleName,
+      lastName,
+      email,
+      phoneNumber,
+      comment,
+    };
+    await createCandidateInfo(candidateInfoPayload);
+
+    alert("Application submitted successfully!");
+    e.target.reset();
+    setCvName("No file selected");
+  } catch (err) {
+    console.error("Error submitting application:", err);
+    alert(err.message ?? "There was an error submitting your application.");
+  } finally {
+    setSubmitting(false);
   }
+}
+
+
+  
+
 
   return (
     <div className="candidatura-page">
