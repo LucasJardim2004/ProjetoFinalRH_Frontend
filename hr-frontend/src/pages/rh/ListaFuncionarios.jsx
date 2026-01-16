@@ -2,9 +2,9 @@ import { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 // AG Grid core + módulos
-
 import { ModuleRegistry, AllCommunityModule } from "ag-grid-community";
 ModuleRegistry.registerModules([AllCommunityModule]);
+
 import { TextField } from "@mui/material";
 
 // AG Grid React wrapper
@@ -18,7 +18,7 @@ import "./listaFuncionarios.css";
 
 import { getEmployees } from "../../services/apiClient";
 
-import { useAuth } from "../../AuthProvider.jsx"
+import { useAuth } from "../../AuthProvider.jsx";
 
 const ApplyCellRenderer = (props) => {
   const navigate = useNavigate();
@@ -34,7 +34,7 @@ const ApplyCellRenderer = (props) => {
     <div className="vagas-actions-cell">
       {user?.roles?.[0] === "HR" && (
         <button type="button" onClick={handleDetail} className="button-9">
-          See Details
+          👁
         </button>
       )}
     </div>
@@ -62,7 +62,6 @@ function ListaFuncionarios() {
         }));
 
         setRowData(mapped);
-
       } catch (err) {
         console.error("Error loading employees", err);
       }
@@ -76,11 +75,11 @@ function ListaFuncionarios() {
     if (!q) return rowData;
 
     return rowData.filter((row) => {
-        const nid = (row.nationalIDNumber ?? "").toString().toLowerCase();
-        const jobTitle = (row.jobTitle ?? "").toString().toLowerCase();
-        return nid.includes(q) || jobTitle.includes(q);
-      });
-    }, [rowData, searchQuery]);
+      const nid = (row.nationalIDNumber ?? "").toString().toLowerCase();
+      const jobTitle = (row.jobTitle ?? "").toString().toLowerCase();
+      return nid.includes(q) || jobTitle.includes(q);
+    });
+  }, [rowData, searchQuery]);
 
   const defaultColDef = {
     sortable: false,
@@ -130,32 +129,26 @@ function ListaFuncionarios() {
     <div className="vagas-page">
       <div className="vagas-header">
         <div>
-          <h1 className="vagas-title">Employees</h1>
-          <p className="vagas-subtitle">
-            Below you can find a paginated list of employees (20 per page).
-          </p>
+          <h1 className="vagas-title">Employees List</h1>
         </div>
       </div>
 
       <div className="search">
-          <TextField
-            id="employee-search"
-            variant="outlined"
-            fullWidth
-            label="Search Employees"
-            placeholder="Type Job Title or National ID..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
-        {filteredRowData.length === 0 && (
-          <p className="no-results">No employees found.</p>
-        )}
+        <TextField
+          id="employee-search"
+          variant="outlined"
+          fullWidth
+          label="Search Employees"
+          placeholder="Type Job Title or National ID..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+      </div>
+      {filteredRowData.length === 0 && (
+        <p className="no-results" style={{ fontWeight: "bold", color: "red" }}>No employees found.</p>
+      )}
 
       <div className="vagas-card">
-        
-        
-
         <div className="ag-theme-quartz vagas-grid-wrapper">
           <AgGridReact
             rowData={filteredRowData}

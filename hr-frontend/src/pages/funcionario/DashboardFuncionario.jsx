@@ -840,9 +840,6 @@ const currentDepartment = useMemo(() => {
       <div className="vagas-header">
         <div>
           <h1 className="vagas-title">Employee Details</h1>
-          <p className="vagas-subtitle">
-            General data and email are editable. Department history EndDate is editable per row.
-          </p>
         </div>
       </div>
 

@@ -60,6 +60,28 @@ font-weight: 600;
 color: #6366f1;
 }
 
+
+.modern-btn {
+  background: transparent;
+  border: none;
+  padding: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #000;
+  transition: background 0.2s ease, color 0.2s ease, transform 0.1s ease;
+}
+
+.modern-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: #000;
+  transform: translateY(-1px);
+}
+
+.modern-btn:active {
+  transform: scale(0.97);
+}
+
+
 /* Botão de logout */
 
 .logout-link {

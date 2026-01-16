@@ -1,9 +1,11 @@
-import { useState, useEffect } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 // AG Grid core + módulos
 import { ModuleRegistry, AllCommunityModule } from "ag-grid-community";
 ModuleRegistry.registerModules([AllCommunityModule]);
+
+import { TextField } from "@mui/material";
 
 // AG Grid React wrapper
 import { AgGridReact } from "ag-grid-react";
@@ -16,7 +18,7 @@ import "./vagas.css";
 
 import { getOpenings, deleteOpening } from "../../services/apiClient";
 
-import { useAuth } from "../../AuthProvider.jsx"
+import { useAuth } from "../../AuthProvider.jsx";
 
 const ApplyCellRenderer = (props) => {
   const navigate = useNavigate();
@@ -110,6 +112,7 @@ const ApplyCellRenderer = (props) => {
 
 function Vagas() {
   const [rowData, setRowData] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
   const { user, loading } = useAuth();
 
@@ -126,17 +129,17 @@ function Vagas() {
     try {
       await deleteOpening(openingID);
 
-      setRowData((prev) =>
-        prev.filter((row) => row.openingID !== openingID)
-      );
+      setRowData((prev) => prev.filter((row) => row.openingID !== openingID));
 
       alert("Opening deleted successfully.");
     } catch (err) {
       console.error("Error deleting opening:", err);
       const responseData = err?.response?.data ?? err?.data;
-      const apiMessage = responseData?.message ?? 
-      (typeof responseData === "string" ? responseData : null) ??
-      err?.message ?? null;
+      const apiMessage =
+        responseData?.message ??
+        (typeof responseData === "string" ? responseData : null) ??
+        err?.message ??
+        null;
 
       console.error("API error data:", responseData);
       console.error("Full message:", apiMessage);
@@ -158,7 +161,6 @@ function Vagas() {
         }));
 
         setRowData(mapped);
-
       } catch (err) {
         console.error("Error loading openings", err);
       }
@@ -166,6 +168,16 @@ function Vagas() {
 
     loadOpenings();
   }, []);
+
+  const filteredRowData = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return rowData;
+
+    return rowData.filter((row) => {
+      const jobTitle = (row.jobTitle ?? "").toString().toLowerCase();
+      return jobTitle.includes(q);
+    });
+  }, [rowData, searchQuery]);
 
   const defaultColDef = {
     sortable: false,
@@ -192,28 +204,39 @@ function Vagas() {
     <div className="vagas-page">
       <div className="vagas-header">
         <div>
-          <h1 className="vagas-title">Open Positions</h1>
-          <p className="vagas-subtitle">
-            Below you can find all job postings currently registered in the
-            system.
-          </p>
+          <h1 className="vagas-title">Job Openings</h1>
         </div>
 
         {user?.roles?.[0] === "HR" && (
-        <button
-          type="button"
-          onClick={handleGoToCreateOpening}
-          className="vagas-create-btn"
-        >
-          + Create opening
-        </button>
+          <button
+            type="button"
+            onClick={handleGoToCreateOpening}
+            className="vagas-create-btn"
+          >
+            + Create opening
+          </button>
         )}
       </div>
+
+      <div className="search">
+        <TextField
+          id="opening-search"
+          variant="outlined"
+          fullWidth
+          label="Search Openings"
+          placeholder="Type Job Title..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+      </div>
+      {filteredRowData.length === 0 && (
+        <p className="no-results" style={{ fontWeight: "bold", color: "red" }}>No openings found.</p>
+      )}
 
       <div className="vagas-card">
         <div className="ag-theme-quartz vagas-grid-wrapper">
           <AgGridReact
-            rowData={rowData}
+            rowData={filteredRowData}
             columnDefs={colDefs}
             defaultColDef={defaultColDef}
             animateRows={true}
