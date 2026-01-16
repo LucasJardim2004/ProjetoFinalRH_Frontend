@@ -604,6 +604,13 @@ export default function DashboardFuncionario() {
 
   const effectiveId = isHR ? (paramId || ownId) : ownId;
 
+  // Redirect non-HR users trying to access another employee's dashboard
+  useEffect(() => {
+    if (!authLoading && !isHR && paramId && paramId !== ownId) {
+      navigate("/", { replace: true });
+    }
+  }, [authLoading, isHR, paramId, ownId, navigate]);
+
   // Reload helper
   const reloadEmployee = React.useCallback(async () => {
     if (!effectiveId){
