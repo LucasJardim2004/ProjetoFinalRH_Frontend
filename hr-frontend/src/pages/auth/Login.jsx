@@ -33,7 +33,7 @@ function Login() {
       <div className="login-card">
         <div className="login-header">
           <h1>Company System</h1>
-          <p>Área reservada a Funcionários</p>
+          <p>Reserved area</p>
         </div>
 
         <form onSubmit={handleSubmit} className="login-form">
@@ -51,7 +51,7 @@ function Login() {
           </div>
 
           <div className="form-group">
-            <label htmlFor="password">Palavra-passe</label>
+            <label htmlFor="password">Password</label>
             <div className="password-wrapper">
               <input
                 id="password"
@@ -65,7 +65,7 @@ function Login() {
           </div>
 
           <button type="submit" className="login-button" disabled={loading}>
-            {loading ? "A entrar..." : "Entrar"}
+            {loading ? "Login..." : "Login"}
           </button>
 
           {error && <div className="error">{error}</div>}
@@ -80,4 +80,3 @@ function Login() {
 }
 
 export default Login;
-

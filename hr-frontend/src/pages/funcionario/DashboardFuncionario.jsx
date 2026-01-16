@@ -8,13 +8,17 @@ import {
   patchDepartmentHistoryEndDate,
   createDepartmentHistory,
   createPayHistory,
-  replacePhoneNonAtomic as replacePhoneApi
+  replacePhoneNonAtomic as replacePhoneApi,
 } from "../../services/apiClient";
 import "./dashboardFuncionario.css";
 import "ag-grid-community/styles/ag-grid.css";
 import { useAuth } from "/src/AuthProvider.jsx";
-import { ModuleRegistry, AllCommunityModule, themeQuartz } from "ag-grid-community";
-ModuleRegistry.registerModules([AllCommunityModule]); 
+import {
+  ModuleRegistry,
+  AllCommunityModule,
+  themeQuartz,
+} from "ag-grid-community";
+ModuleRegistry.registerModules([AllCommunityModule]);
 import { AgGridReact } from "ag-grid-react";
 
 const myTheme = themeQuartz.withParams({
@@ -33,31 +37,30 @@ function toLocalYmd(dateLike) {
   return `${y}-${m}-${day}`;
 }
 
-
 const DISPLAY_LOCALE = "pt-PT";
 
-    function validateEndDate(d, data) {
-      // 1) Forbid clearing
-      if (!d) return "Clearing EndDate is not supported.";
+function validateEndDate(d, data) {
+  // 1) Forbid clearing
+  if (!d) return "Clearing EndDate is not supported.";
 
-      // 2) Ensure valid date
-      const endDate = normalizeToDate(d);
-      if (!isValidDate(endDate)) return "End date is invalid.";
+  // 2) Ensure valid date
+  const endDate = normalizeToDate(d);
+  if (!isValidDate(endDate)) return "End date is invalid.";
 
-      // 3) Compare to start date if present
-      const startRaw = data?.startDate ?? data?.StartDate ?? null;
-      if (startRaw) {
-        const startDate = normalizeToDate(startRaw);
-        if (isValidDate(startDate)) {
-          const s = toLocalYmd(startDate); // "YYYY-MM-DD"
-          const e = toLocalYmd(endDate);   // "YYYY-MM-DD"
-          if (s && e && e < s) {
-            return "End date cannot be before start date.";
-          }
-        }
+  // 3) Compare to start date if present
+  const startRaw = data?.startDate ?? data?.StartDate ?? null;
+  if (startRaw) {
+    const startDate = normalizeToDate(startRaw);
+    if (isValidDate(startDate)) {
+      const s = toLocalYmd(startDate); // "YYYY-MM-DD"
+      const e = toLocalYmd(endDate); // "YYYY-MM-DD"
+      if (s && e && e < s) {
+        return "End date cannot be before start date.";
       }
-      return null;
     }
+  }
+  return null;
+}
 
 function formatDate(value, locale = DISPLAY_LOCALE) {
   if (!value) return "—";
@@ -112,7 +115,6 @@ function normalizeToDate(dateLike) {
   return null;
 }
 
-
 function EditIconButton({ onClick, title = "Edit" }) {
   return (
     <button
@@ -133,7 +135,6 @@ function EditIconButton({ onClick, title = "Edit" }) {
     </button>
   );
 }
-
 
 function EditableField({
   label,
@@ -193,17 +194,20 @@ function EditableField({
   }
 
   const unchanged =
-    (type === "date"
+    type === "date"
       ? (value?.getTime?.() || value) === (local?.getTime?.() || local)
-      : value === local);
+      : value === local;
 
   return (
     <div className="detail-item">
       <span className="label">{label}</span>
-      <div className="value" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+      <div
+        className="value"
+        style={{ display: "flex", alignItems: "center", gap: 8 }}
+      >
         {!editing ? (
           <>
-            <span>{renderValue ? renderValue(value) : (value ?? "—")}</span>
+            <span>{renderValue ? renderValue(value) : value ?? "—"}</span>
             {!disabled && (
               <EditIconButton onClick={startEdit} title={`Edit ${label}`} />
             )}
@@ -235,7 +239,9 @@ function EditableField({
                 onChange={(e) => setLocal(e.target.value)}
                 disabled={saving || disabled}
               >
-                <option value="" disabled>Select…</option>
+                <option value="" disabled>
+                  Select…
+                </option>
                 {options.map((opt) => (
                   <option key={opt.value} value={opt.value}>
                     {opt.label}
@@ -266,14 +272,16 @@ function EditableField({
         )}
       </div>
       {error && (
-        <div style={{ color: "red", marginTop: 4, fontSize: 12 }} aria-live="polite">
+        <div
+          style={{ color: "red", marginTop: 4, fontSize: 12 }}
+          aria-live="polite"
+        >
           {error}
         </div>
       )}
     </div>
   );
 }
-
 
 function DeptEndDateCellRenderer(props) {
   const { value, data, onSaveEndDate, api } = props;
@@ -307,10 +315,6 @@ function DeptEndDateCellRenderer(props) {
     setEditing(false);
   }
 
-
-
-
-
   const unchanged = React.useMemo(() => {
     return toISODateOnly(initialDate) === toISODateOnly(local);
   }, [initialDate, local]);
@@ -341,7 +345,7 @@ function DeptEndDateCellRenderer(props) {
         <>
           <span>{formatDate(value, DISPLAY_LOCALE)}</span>
           {user?.roles?.[0] === "HR" && (
-          <EditIconButton onClick={startEdit} title="Edit End" />
+            <EditIconButton onClick={startEdit} title="Edit End" />
           )}
         </>
       ) : (
@@ -372,7 +376,10 @@ function DeptEndDateCellRenderer(props) {
             Cancel
           </button>
           {error && (
-            <span style={{ color: "red", fontSize: 12, marginLeft: 6 }} aria-live="polite">
+            <span
+              style={{ color: "red", fontSize: 12, marginLeft: 6 }}
+              aria-live="polite"
+            >
               {error}
             </span>
           )}
@@ -392,7 +399,9 @@ function AddDeptMovementModal({
   const [deptId, setDeptId] = React.useState("");
   const [error, setError] = React.useState(null);
   const [saving, setSaving] = React.useState(false);
-  const [startDate, setStartDate] = React.useState(defaultStartDate ?? new Date());
+  const [startDate, setStartDate] = React.useState(
+    defaultStartDate ?? new Date()
+  );
 
   React.useEffect(() => {
     if (isOpen) {
@@ -415,7 +424,8 @@ function AddDeptMovementModal({
         String(r.departmentID) === String(n) &&
         toISODateOnly(r.startDate) === startYmd
     );
-    if (dup) return "A movement with this DepartmentID and Start Date already exists.";
+    if (dup)
+      return "A movement with this DepartmentID and Start Date already exists.";
     return null;
   }
 
@@ -440,27 +450,87 @@ function AddDeptMovementModal({
   if (!isOpen) return null;
 
   return (
-    <div role="dialog" aria-modal="true" aria-labelledby="add-dept-title"
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="add-dept-title"
       className="modal-backdrop"
-      style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999 }}
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="modal-card"
-        style={{ background: "#fff", padding: 16, borderRadius: 8, minWidth: 320, boxShadow: "0 10px 24px rgba(0,0,0,0.2)" }}>
-        <h3 id="add-dept-title" style={{ marginTop: 0, marginBottom: 12 }}>Add Department Movement</h3>
+      style={{
+        position: "fixed",
+        inset: 0,
+        background: "rgba(0,0,0,0.4)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 9999,
+      }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div
+        className="modal-card"
+        style={{
+          background: "#fff",
+          padding: 16,
+          borderRadius: 8,
+          minWidth: 320,
+          boxShadow: "0 10px 24px rgba(0,0,0,0.2)",
+        }}
+      >
+        <h3 id="add-dept-title" style={{ marginTop: 0, marginBottom: 12 }}>
+          Add Department Movement
+        </h3>
         <form onSubmit={handleSubmit}>
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               <span>Department ID (1–16)</span>
-              <input type="number" min={1} max={16} inputMode="numeric" value={deptId} onChange={(e) => setDeptId(e.target.value)} required />
+              <input
+                type="number"
+                min={1}
+                max={16}
+                inputMode="numeric"
+                value={deptId}
+                onChange={(e) => setDeptId(e.target.value)}
+                required
+              />
             </label>
             <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               <span>Start Date</span>
-              <input type="date" value={toISODateOnly(startDate)} onChange={(e) => setStartDate(fromDateInput(e.target.value))} />
+              <input
+                type="date"
+                value={toISODateOnly(startDate)}
+                onChange={(e) => setStartDate(fromDateInput(e.target.value))}
+              />
             </label>
-            {error && <div style={{ color: "red", fontSize: 12 }} aria-live="polite">{error}</div>}
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 8 }}>
-              <button type="button" className="btn btn-secondary" onClick={onClose} disabled={saving}>Cancel</button>
-              <button type="submit" className="btn btn-primary" disabled={saving || !deptId}>{saving ? "Adding…" : "Add"}</button>
+            {error && (
+              <div style={{ color: "red", fontSize: 12 }} aria-live="polite">
+                {error}
+              </div>
+            )}
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "flex-end",
+                gap: 8,
+                marginTop: 8,
+              }}
+            >
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={onClose}
+                disabled={saving}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="btn btn-primary"
+                disabled={saving || !deptId}
+              >
+                {saving ? "Adding…" : "Add"}
+              </button>
             </div>
           </div>
         </form>
@@ -469,11 +539,7 @@ function AddDeptMovementModal({
   );
 }
 
-function AddPayHistoryModal({
-  isOpen,
-  onClose,
-  onConfirm, 
-}) {
+function AddPayHistoryModal({ isOpen, onClose, onConfirm }) {
   const [rate, setRate] = React.useState("");
   const [payFreq, setPayFreq] = React.useState("1"); // 1=Monthly, 2=Biweekly
   const [error, setError] = React.useState(null);
@@ -492,7 +558,8 @@ function AddPayHistoryModal({
     const r = Number(rate);
     const f = Number(payFreq);
     if (!isFinite(r) || r <= 0) return "Rate must be a positive number.";
-    if (![1, 2].includes(f)) return "Pay Frequency must be 1 (Monthly) or 2 (Biweekly).";
+    if (![1, 2].includes(f))
+      return "Pay Frequency must be 1 (Monthly) or 2 (Biweekly).";
     return null;
   }
 
@@ -506,7 +573,7 @@ function AddPayHistoryModal({
     try {
       setSaving(true);
       await onConfirm(Number(rate), Number(payFreq));
-      onClose(); 
+      onClose();
     } catch (err) {
       setError(err?.message || "Failed to add pay history.");
     } finally {
@@ -517,12 +584,34 @@ function AddPayHistoryModal({
   if (!isOpen) return null;
 
   return (
-    <div role="dialog" aria-modal="true" aria-labelledby="add-pay-title"
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="add-pay-title"
       className="modal-backdrop"
-      style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999 }}
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="modal-card"
-        style={{ background: "#fff", padding: 16, borderRadius: 8, minWidth: 320, boxShadow: "0 10px 24px rgba(0,0,0,0.2)" }}>
+      style={{
+        position: "fixed",
+        inset: 0,
+        background: "rgba(0,0,0,0.4)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 9999,
+      }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div
+        className="modal-card"
+        style={{
+          background: "#fff",
+          padding: 16,
+          borderRadius: 8,
+          minWidth: 320,
+          boxShadow: "0 10px 24px rgba(0,0,0,0.2)",
+        }}
+      >
         <h3 id="add-pay-title" style={{ marginTop: 0, marginBottom: 12 }}>
           Add Pay History
         </h3>
@@ -544,7 +633,10 @@ function AddPayHistoryModal({
 
             <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               <span>Pay Frequency</span>
-              <select value={payFreq} onChange={(e) => setPayFreq(e.target.value)}>
+              <select
+                value={payFreq}
+                onChange={(e) => setPayFreq(e.target.value)}
+              >
                 <option value="1">Monthly</option>
                 <option value="2">Biweekly</option>
               </select>
@@ -556,11 +648,27 @@ function AddPayHistoryModal({
               </div>
             )}
 
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 8 }}>
-              <button type="button" className="btn btn-secondary" onClick={onClose} disabled={saving}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "flex-end",
+                gap: 8,
+                marginTop: 8,
+              }}
+            >
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={onClose}
+                disabled={saving}
+              >
                 Cancel
               </button>
-              <button type="submit" className="btn btn-primary" disabled={saving || !rate}>
+              <button
+                type="submit"
+                className="btn btn-primary"
+                disabled={saving || !rate}
+              >
                 {saving ? "Adding…" : "Add"}
               </button>
             </div>
@@ -579,9 +687,6 @@ const MARITAL_OPTS = [
   { value: "M", label: "Married" },
   { value: "S", label: "Single" },
 ];
-
-
-
 
 /* FUNÇÃO DASHBOARD */
 export default function DashboardFuncionario() {
@@ -602,7 +707,7 @@ export default function DashboardFuncionario() {
   const paramId = businessEntityID ? Number(businessEntityID) : null;
   const ownId = user?.businessEntityID ? Number(user.businessEntityID) : null;
 
-  const effectiveId = isHR ? (paramId || ownId) : ownId;
+  const effectiveId = isHR ? paramId || ownId : ownId;
 
   // Redirect non-HR users trying to access another employee's dashboard
   useEffect(() => {
@@ -613,7 +718,7 @@ export default function DashboardFuncionario() {
 
   // Reload helper
   const reloadEmployee = React.useCallback(async () => {
-    if (!effectiveId){
+    if (!effectiveId) {
       throw new Error("Erro");
     }
     const employee = await getEmployee(effectiveId);
@@ -621,7 +726,7 @@ export default function DashboardFuncionario() {
   }, [effectiveId]);
 
   useEffect(() => {
-    if (authLoading){
+    if (authLoading) {
       setLoading(true);
       return;
     }
@@ -652,20 +757,29 @@ export default function DashboardFuncionario() {
   }
   async function saveMaritalStatus(newValue) {
     const v = String(newValue).toUpperCase();
-    if (!["M", "S"].includes(v)) throw new Error("Invalid Marital Status (M/S).");
-    const updated = await patchEmployee(emp.businessEntityID, { MaritalStatus: v });
+    if (!["M", "S"].includes(v))
+      throw new Error("Invalid Marital Status (M/S).");
+    const updated = await patchEmployee(emp.businessEntityID, {
+      MaritalStatus: v,
+    });
     setEmp((prev) => ({ ...prev, ...updated }));
   }
   async function saveBirthDate(newDate) {
-    if (newDate && !isValidDate(newDate)) throw new Error("Birth date is invalid.");
+    if (newDate && !isValidDate(newDate))
+      throw new Error("Birth date is invalid.");
     const bodyDate = newDate ? toISODateOnly(newDate) : null;
-    const updated = await patchEmployee(emp.businessEntityID, { BirthDate: bodyDate });
+    const updated = await patchEmployee(emp.businessEntityID, {
+      BirthDate: bodyDate,
+    });
     setEmp((prev) => ({ ...prev, ...updated }));
   }
   async function saveHireDate(newDate) {
-    if (newDate && !isValidDate(newDate)) throw new Error("Hire date is invalid.");
+    if (newDate && !isValidDate(newDate))
+      throw new Error("Hire date is invalid.");
     const bodyDate = newDate ? toISODateOnly(newDate) : null;
-    const updated = await patchEmployee(emp.businessEntityID, { HireDate: bodyDate });
+    const updated = await patchEmployee(emp.businessEntityID, {
+      HireDate: bodyDate,
+    });
     setEmp((prev) => ({ ...prev, ...updated }));
   }
   async function saveEmail(newEmail) {
@@ -673,172 +787,218 @@ export default function DashboardFuncionario() {
       throw new Error("Invalid email format.");
     }
     const dto = await patchEmail(emp.businessEntityID, newEmail || null);
-    setEmp((prev) => ({ ...prev, emailAddress: dto?.EmailAddress ?? newEmail ?? null }));
+    setEmp((prev) => ({
+      ...prev,
+      emailAddress: dto?.EmailAddress ?? newEmail ?? null,
+    }));
   }
 
+  async function savePhone(newPhone) {
+    const oldPhone = emp.phoneNumber; // current value from DB
+    const newPhoneTrimmed = (newPhone ?? "").trim();
+    // Use the type that came from the API; fallback to 1 only if null
+    const typeId = Number.isInteger(emp.phoneNumberTypeID)
+      ? emp.phoneNumberTypeID
+      : 1;
 
+    console.log("[Dashboard.savePhone] replacing:", {
+      businessEntityID: emp.businessEntityID,
+      oldPhone,
+      newPhone: newPhoneTrimmed,
+      phoneNumberTypeID: typeId,
+    });
 
-async function savePhone(newPhone) {
-  const oldPhone = emp.phoneNumber; // current value from DB
-  const newPhoneTrimmed = (newPhone ?? "").trim();
-  // Use the type that came from the API; fallback to 1 only if null
-  const typeId = Number.isInteger(emp.phoneNumberTypeID) ? emp.phoneNumberTypeID : 1;
-
-  console.log("[Dashboard.savePhone] replacing:", {
-    businessEntityID: emp.businessEntityID,
-    oldPhone,
-    newPhone: newPhoneTrimmed,
-    phoneNumberTypeID: typeId,
-  });
-
-  await replacePhoneApi(emp.businessEntityID, oldPhone, newPhoneTrimmed, typeId);
-  await reloadEmployee();
-}
-
-
+    await replacePhoneApi(
+      emp.businessEntityID,
+      oldPhone,
+      newPhoneTrimmed,
+      typeId
+    );
+    await reloadEmployee();
+  }
 
   /* Dept EndDate (renderer) */
 
-  const onSaveDepartmentEndDate = React.useCallback(async (rowData, newDate) => {
-    // Normalize first
-    const endDate = normalizeToDate(newDate);
-    if (!isValidDate(endDate)) {
-      throw new Error("End date is invalid.");
-    }
+  const onSaveDepartmentEndDate = React.useCallback(
+    async (rowData, newDate) => {
+      // Normalize first
+      const endDate = normalizeToDate(newDate);
+      if (!isValidDate(endDate)) {
+        throw new Error("End date is invalid.");
+      }
 
-    // Build YYYY-MM-DD (local) for backend
-    const endYmd = toLocalYmd(endDate);
-    if (!endYmd) throw new Error("Unable to convert end date.");
+      // Build YYYY-MM-DD (local) for backend
+      const endYmd = toLocalYmd(endDate);
+      if (!endYmd) throw new Error("Unable to convert end date.");
 
-    // Optional: run the same validation here for safety
-    const v = validateEndDate(endDate, rowData);
-    if (v) throw new Error(v);
+      // Optional: run the same validation here for safety
+      const v = validateEndDate(endDate, rowData);
+      if (v) throw new Error(v);
 
-    await patchDepartmentHistoryEndDate(
-      Number(emp.businessEntityID),
-      rowData,
-      endYmd
-    );
-    await reloadEmployee();
-  }, [emp?.businessEntityID, reloadEmployee]);
-
+      await patchDepartmentHistoryEndDate(
+        Number(emp.businessEntityID),
+        rowData,
+        endYmd
+      );
+      await reloadEmployee();
+    },
+    [emp?.businessEntityID, reloadEmployee]
+  );
 
   /* Create Department Movement */
 
-  const handleAddDepartmentMovement = React.useCallback(async (departmentID, startDate) => {
-    const startYmd = toISODateOnly(startDate);
-    const histories = emp?.employeeDepartmentHistories ?? [];
+  const handleAddDepartmentMovement = React.useCallback(
+    async (departmentID, startDate) => {
+      const startYmd = toISODateOnly(startDate);
+      const histories = emp?.employeeDepartmentHistories ?? [];
 
-    
-    const hasOpenMovement = histories.some((h) => {
-      const end = h.endDate;
-      return end == null || (typeof end === "string" && end.trim() === "");
-    });
+      const hasOpenMovement = histories.some((h) => {
+        const end = h.endDate;
+        return end == null || (typeof end === "string" && end.trim() === "");
+      });
 
-    if (hasOpenMovement) {
-      // IMPORTANT: throw, do NOT return a string
-      throw new Error("There's already an open movement. Close it before adding a new one.");
-    }
+      if (hasOpenMovement) {
+        // IMPORTANT: throw, do NOT return a string
+        throw new Error(
+          "There's already an open movement. Close it before adding a new one."
+        );
+      }
 
+      // Guard 2: duplicate prevention (same departmentID and startDate)
+      const startDupExists = histories.some(
+        (r) =>
+          String(r.departmentID) === String(departmentID) &&
+          toISODateOnly(r.startDate) === startYmd
+      );
 
+      if (startDupExists) {
+        throw new Error(
+          "A movement with this DepartmentID and Start Date already exists."
+        );
+      }
 
-    // Guard 2: duplicate prevention (same departmentID and startDate)
-    const startDupExists = histories.some(
-      (r) =>
-        String(r.departmentID) === String(departmentID) &&
-        toISODateOnly(r.startDate) === startYmd
-    );
+      await createDepartmentHistory(
+        emp.businessEntityID,
+        departmentID,
+        startYmd
+      );
 
-    if (startDupExists) {
-      throw new Error("A movement with this DepartmentID and Start Date already exists.");
-    }
+      // Option A: server is source of truth — refresh canonical data
+      await reloadEmployee();
 
-    
-    await createDepartmentHistory(emp.businessEntityID, departmentID, startYmd);
-
-    // Option A: server is source of truth — refresh canonical data
-    await reloadEmployee();
-
-    // ✅ Close modal AFTER success
-    setShowAddDeptModal(false);
-  },
-  [emp?.businessEntityID, emp?.employeeDepartmentHistories, reloadEmployee]
-);
-
-
+      // ✅ Close modal AFTER success
+      setShowAddDeptModal(false);
+    },
+    [emp?.businessEntityID, emp?.employeeDepartmentHistories, reloadEmployee]
+  );
 
   /* Create Pay History (Rate + Frequency only; server sets RateChangeDate = now) */
-  const handleAddPayHistory = React.useCallback(async (rate, payFrequency) => {
-    setShowAddPayModal(false);
-    await createPayHistory(emp.businessEntityID, rate, payFrequency);
-    await reloadEmployee();
-  }, [emp?.businessEntityID, reloadEmployee]);
+  const handleAddPayHistory = React.useCallback(
+    async (rate, payFrequency) => {
+      setShowAddPayModal(false);
+      await createPayHistory(emp.businessEntityID, rate, payFrequency);
+      await reloadEmployee();
+    },
+    [emp?.businessEntityID, reloadEmployee]
+  );
 
   /* AG Grid configuration */
-  const defaultColDef = useMemo(() => ({
-    sortable: false,
-    filter: false,
-    resizable: true,
-    flex: 1,
-    editable: false,
-    minWidth: 140
-  }), []);
+  const defaultColDef = useMemo(
+    () => ({
+      sortable: false,
+      filter: false,
+      resizable: true,
+      flex: 1,
+      editable: false,
+      minWidth: 140,
+    }),
+    []
+  );
 
+  // DashboardFuncionario.jsx
+  const deptCols = useMemo(
+    () => [
+      { field: "departmentID", headerName: "Department ID", maxWidth: 140 },
+      {
+        headerName: "Department",
+        valueGetter: (p) =>
+          p.data?.departmentName ?? `#${p.data?.departmentID ?? "—"}`,
+        flex: 1,
+        minWidth: 180,
+      },
+      {
+        field: "startDate",
+        headerName: "Start",
+        valueFormatter: (p) => formatDate(p.value, DISPLAY_LOCALE),
+      },
+      {
+        field: "endDate",
+        headerName: "End",
+        cellRenderer: DeptEndDateCellRenderer,
+        cellRendererParams: { onSaveEndDate: onSaveDepartmentEndDate },
+      },
+      {
+        headerName: "Status",
+        valueGetter: (p) => (p.data?.endDate ? "Previous" : "Current"),
+      },
+    ],
+    [onSaveDepartmentEndDate]
+  );
 
-// DashboardFuncionario.jsx
-const deptCols = useMemo(() => [
-  { field: "departmentID", headerName: "Department ID", maxWidth: 140 },
-  {
-    headerName: "Department",
-    valueGetter: (p) => p.data?.departmentName ?? `#${p.data?.departmentID ?? "—"}`,
-    flex: 1,
-    minWidth: 180,
-  },
-  { field: "startDate", headerName: "Start", valueFormatter: (p) => formatDate(p.value, DISPLAY_LOCALE)},
-  {
-    field: "endDate",
-    headerName: "End",
-    cellRenderer: DeptEndDateCellRenderer,
-    cellRendererParams: { onSaveEndDate: onSaveDepartmentEndDate },
-  },
-  { headerName: "Status", valueGetter: (p) => (p.data?.endDate ? "Previous" : "Current")},
-], [onSaveDepartmentEndDate]);
+  const payCols = useMemo(
+    () => [
+      {
+        field: "rateChangeDate",
+        headerName: "Rate Change Date",
+        valueFormatter: (p) => formatDate(p.value, DISPLAY_LOCALE),
+      },
+      {
+        field: "rate",
+        headerName: "Rate (€/hour)",
+        valueFormatter: (p) =>
+          typeof p.value === "number"
+            ? p.value.toLocaleString(DISPLAY_LOCALE, {
+                style: "currency",
+                currency: "EUR",
+              })
+            : "—",
+      },
+      {
+        field: "payFrequency",
+        headerName: "Frequency",
+        valueFormatter: (p) => formatPayFrequency(p.value),
+      },
+    ],
+    []
+  );
 
+  const deptRowClassRules = useMemo(
+    () => ({
+      "row-current": (params) => !params.data?.endDate,
+    }),
+    []
+  );
 
-  const payCols = useMemo(() => [
-    { field: "rateChangeDate", headerName: "Rate Change Date", valueFormatter: (p) => formatDate(p.value, DISPLAY_LOCALE)},
-    {
-      field: "rate",
-      headerName: "Rate (€/hour)",
-      valueFormatter: (p) =>
-        typeof p.value === "number"
-          ? p.value.toLocaleString(DISPLAY_LOCALE, { style: "currency", currency: "EUR" })
-          : "—",
-    },
-    { field: "payFrequency", headerName: "Frequency", valueFormatter: (p) => formatPayFrequency(p.value)},
-  ], []);
+  const currentDepartment = useMemo(() => {
+    const histories = emp?.employeeDepartmentHistories ?? [];
+    if (!histories.length) return null;
 
-  const deptRowClassRules = useMemo(() => ({
-    "row-current": (params) => !params.data?.endDate,
-  }), []);
+    // Filter for open (endDate == null)
+    const open = histories.filter((h) => !h.endDate);
+    if (open.length) {
+      // If multiple, pick the one with latest startDate
+      return (
+        open.sort((a, b) => new Date(b.startDate) - new Date(a.startDate))[0]
+          .departmentName ?? null
+      );
+    }
 
-  
-const currentDepartment = useMemo(() => {
-  const histories = emp?.employeeDepartmentHistories ?? [];
-  if (!histories.length) return null;
-
-  // Filter for open (endDate == null)
-  const open = histories.filter(h => !h.endDate);
-  if (open.length) {
-    // If multiple, pick the one with latest startDate
-    return open.sort((a, b) => new Date(b.startDate) - new Date(a.startDate))[0].departmentName ?? null;
-  }
-
-  // If no open, fallback to most recent by startDate
-  const latest = histories.sort((a, b) => new Date(b.startDate) - new Date(a.startDate))[0];
-  return latest?.departmentName ?? null;
-}, [emp]);
-
+    // If no open, fallback to most recent by startDate
+    const latest = histories.sort(
+      (a, b) => new Date(b.startDate) - new Date(a.startDate)
+    )[0];
+    return latest?.departmentName ?? null;
+  }, [emp]);
 
   console.log(emp);
 
@@ -860,18 +1020,36 @@ const currentDepartment = useMemo(() => {
             <section className="employee-details-section">
               <h2 className="section-title">General Information</h2>
 
-              
-              <div className="detail-item">
-                <span className="label">Name</span>
-                <span className="value">{emp.firstName + " " + emp.lastName ?? "—"}</span>
-              </div>
-
-              <div className="detail-item">
-                <span className="label">Department</span>
-                <span className="value">{currentDepartment}</span>
-              </div>
-
               <div className="employee-details-grid">
+                <div className="detail-item full-row">
+                  <span className="label">Name</span>
+                  <span className="value">
+                    {emp.firstName + " " + emp.lastName ?? "—"}
+                  </span>
+                </div>
+
+                <div className="detail-item full-row">
+                  <span className="label">Department</span>
+                  <span className="value">{currentDepartment}</span>
+                </div>
+
+                <EditableField
+                  label="Email"
+                  value={emp.emailAddress ?? ""}
+                  type="text"
+                  validate={(v) =>
+                    v && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)
+                      ? "Invalid email format"
+                      : null
+                  }
+                  onSave={saveEmail}
+                  disabled={
+                    user?.roles?.[0] !== "HR" ||
+                    String(emp?.businessEntityID) ===
+                      String(user?.businessEntityID)
+                  }
+                />
+
                 <div className="detail-item">
                   <span className="label">ID</span>
                   <span className="value">{emp.businessEntityID ?? "—"}</span>
@@ -881,13 +1059,41 @@ const currentDepartment = useMemo(() => {
                   <span className="value">{emp.nationalIDNumber ?? "—"}</span>
                 </div>
 
-                <EditableField label="Job Title" value={emp.jobTitle ?? ""} onSave={saveJobTitle} type="text" disabled={user?.roles?.[0] !== "HR" || String(emp?.businessEntityID) === String(user?.businessEntityID)} />
-                <EditableField label="Gender" value={emp.gender ?? ""} renderValue={(v) => formatGender(v)} type="select" options={[
-                  { value: "M", label: "Male" }, { value: "F", label: "Female" },
-                ]} onSave={saveGender} />
-                <EditableField label="Marital Status" value={emp.maritalStatus ?? ""} renderValue={(v) => formatMaritalStatus(v)} type="select" options={[
-                  { value: "M", label: "Married" }, { value: "S", label: "Single" },
-                ]} onSave={saveMaritalStatus} /> 
+                <EditableField
+                  label="Job Title"
+                  value={emp.jobTitle ?? ""}
+                  onSave={saveJobTitle}
+                  type="text"
+                  disabled={
+                    user?.roles?.[0] !== "HR" ||
+                    String(emp?.businessEntityID) ===
+                      String(user?.businessEntityID)
+                  }
+                />
+                <EditableField
+                  label="Gender"
+                  value={emp.gender ?? ""}
+                  renderValue={(v) => formatGender(v)}
+                  type="select"
+                  options={[
+                    { value: "M", label: "Male" },
+                    { value: "F", label: "Female" },
+                  ]}
+                  onSave={saveGender}
+                />
+
+                <EditableField
+                  label="Marital Status"
+                  value={emp.maritalStatus ?? ""}
+                  renderValue={(v) => formatMaritalStatus(v)}
+                  type="select"
+                  options={[
+                    { value: "M", label: "Married" },
+                    { value: "S", label: "Single" },
+                  ]}
+                  onSave={saveMaritalStatus}
+                />
+
                 <EditableField
                   label="Birth Date"
                   value={emp.birthDate ? new Date(emp.birthDate) : null}
@@ -895,20 +1101,41 @@ const currentDepartment = useMemo(() => {
                   type="date"
                   onSave={saveBirthDate}
                   parse={(d) => d}
-                  validate={(d) => (d && !isValidDate(d) ? "Birth date is invalid." : null)}
-                  disabled={user?.roles?.[0] !== "HR" || String(emp?.businessEntityID) === String(user?.businessEntityID)} // <-- Non-HR users cannot edit
+                  validate={(d) =>
+                    d && !isValidDate(d) ? "Birth date is invalid." : null
+                  }
+                  disabled={
+                    user?.roles?.[0] !== "HR" ||
+                    String(emp?.businessEntityID) ===
+                      String(user?.businessEntityID)
+                  } // <-- Non-HR users cannot edit
                 />
 
-                <EditableField label="Hire Date" value={emp.hireDate ? new Date(emp.hireDate) : null} renderValue={(v) => formatDate(v, DISPLAY_LOCALE)} type="date" onSave={saveHireDate} parse={(d) => d} validate={(d) => (d && !isValidDate(d) ? "Hire date is invalid." : null)} disabled={user?.roles?.[0] !== "HR" || String(emp?.businessEntityID) === String(user?.businessEntityID)} />
-                <EditableField label="Email" value={emp.emailAddress ?? ""} type="text" validate={(v) => v && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) ? "Invalid email format" : null} onSave={saveEmail} disabled={user?.roles?.[0] !== "HR" || String(emp?.businessEntityID) === String(user?.businessEntityID)}/>
-                
-                
+                <EditableField
+                  label="Hire Date"
+                  value={emp.hireDate ? new Date(emp.hireDate) : null}
+                  renderValue={(v) => formatDate(v, DISPLAY_LOCALE)}
+                  type="date"
+                  onSave={saveHireDate}
+                  parse={(d) => d}
+                  validate={(d) =>
+                    d && !isValidDate(d) ? "Hire date is invalid." : null
+                  }
+                  disabled={
+                    user?.roles?.[0] !== "HR" ||
+                    String(emp?.businessEntityID) ===
+                      String(user?.businessEntityID)
+                  }
+                />
+
                 <EditableField
                   label="Phone"
                   value={emp.phoneNumber ?? ""}
                   type="text"
                   validate={(v) =>
-                    v && !/^[+0-9()\-.\s]{6,25}$/.test(v) ? "Invalid phone format" : null
+                    v && !/^[+0-9()\-.\s]{6,25}$/.test(v)
+                      ? "Invalid phone format"
+                      : null
                   }
                   onSave={savePhone}
                 />
@@ -917,12 +1144,22 @@ const currentDepartment = useMemo(() => {
 
             {/* Department History */}
             <section className="employee-details-section">
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
                 <h2 className="section-title">Department History</h2>
                 {user?.roles?.[0] === "HR" && (
-                  <button type="button" className="btn btn-primary" onClick={() => setShowAddDeptModal(true)}>
-                  + Add Movement
-                </button>
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={() => setShowAddDeptModal(true)}
+                  >
+                    + Add Movement
+                  </button>
                 )}
               </div>
               <div className="vagas-grid-wrapper">
@@ -933,7 +1170,7 @@ const currentDepartment = useMemo(() => {
                   theme={myTheme}
                   animateRows={true}
                   rowClassRules={deptRowClassRules}
-                  rowHeight={64} 
+                  rowHeight={64}
                   headerHeight={40}
                   pagination={false}
                   paginationPageSize={10}
@@ -944,12 +1181,22 @@ const currentDepartment = useMemo(() => {
 
             {/* Pay History */}
             <section className="employee-details-section">
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
                 <h2 className="section-title">Pay History</h2>
                 {user?.roles?.[0] === "HR" && (
-                <button type="button" className="btn btn-primary" onClick={() => setShowAddPayModal(true)}>
-                  + Add Pay Change
-                </button>
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={() => setShowAddPayModal(true)}
+                  >
+                    + Add Pay Change
+                  </button>
                 )}
               </div>
               <div className="vagas-grid-wrapper">
@@ -983,7 +1230,7 @@ const currentDepartment = useMemo(() => {
       <AddPayHistoryModal
         isOpen={showAddPayModal}
         onClose={() => setShowAddPayModal(false)}
-        onConfirm={handleAddPayHistory}  // only rate & frequency (server sets date)
+        onConfirm={handleAddPayHistory} // only rate & frequency (server sets date)
       />
     </div>
   );

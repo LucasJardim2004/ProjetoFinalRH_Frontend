@@ -91,18 +91,19 @@ function ListaFuncionarios() {
     {
       field: "jobTitle",
       headerName: "Job Title",
-      flex: 1.2,
+      flex: 1.5,
     },
     {
       field: "nationalIDNumber",
       headerName: "National ID",
-      flex: 1,
+      flex: 0.8,
       maxWidth: 150,
     },
     {
       field: "gender",
       headerName: "Gender",
-      maxWidth: 120,
+      flex: 0.8,
+      maxWidth: 100,
     },
     {
       field: "maritalStatus",
@@ -112,10 +113,12 @@ function ListaFuncionarios() {
     {
       field: "hireDate",
       headerName: "Hire Date",
+      flex: 0.8,
     },
     {
       field: "birthDate",
       headerName: "Birth Date",
+      flex: 0.8,
     },
     {
       headerName: "Actions",
