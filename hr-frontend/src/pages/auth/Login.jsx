@@ -61,13 +61,6 @@ function Login() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
-              <button
-                type="button"
-                className="toggle-password-btn"
-                onClick={() => setShowPassword((prev) => !prev)}
-              >
-                {showPassword ? "Esconder" : "Mostrar"}
-              </button>
             </div>
           </div>
 

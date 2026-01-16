@@ -6,6 +6,10 @@ import "./layout.css";
 function Header({ user }) {
   const navigate = useNavigate();
 
+  const roles = Array.isArray(user?.roles) ? user.roles : [];
+
+  if (roles[0] !== "HR" && roles[0] !== "Employee") return null;
+
   async function handleLogout() {
     try {
       await logout();          
