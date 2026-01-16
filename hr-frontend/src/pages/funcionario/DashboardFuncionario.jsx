@@ -933,7 +933,7 @@ const currentDepartment = useMemo(() => {
                   headerHeight={40}
                   pagination={false}
                   paginationPageSize={10}
-                  domLayout="autoHeight"
+                  style={{ height: "400px" }}
                 />
               </div>
             </section>
