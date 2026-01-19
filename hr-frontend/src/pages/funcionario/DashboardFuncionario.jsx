@@ -115,7 +115,7 @@ function normalizeToDate(dateLike) {
   return null;
 }
 
-function EditIconButton({ onClick, title = "Edit" }) {
+function EditIconButton({ onClick, title = "Edit", disabled = false }) {
   return (
     <button
       type="button"
@@ -123,12 +123,13 @@ function EditIconButton({ onClick, title = "Edit" }) {
       title={title}
       aria-label={title}
       className="edit-icon-btn"
+      disabled={disabled}
       style={{
         marginLeft: 8,
         border: "none",
         background: "transparent",
-        cursor: "pointer",
         fontSize: 16,
+        opacity: disabled ? 0 : 1,
       }}
     >
       ✏️
@@ -151,6 +152,8 @@ function EditableField({
   const [local, setLocal] = React.useState(value ?? "");
   const [error, setError] = React.useState(null);
   const [saving, setSaving] = React.useState(false);
+  const user = useAuth().user;
+  const [emp, setEmp] = useState(null);
 
   React.useEffect(() => {
     setLocal(value ?? "");
@@ -207,9 +210,12 @@ function EditableField({
       >
         {!editing ? (
           <>
-            <span>{renderValue ? renderValue(value) : value ?? "—"}</span>
+            <span>{renderValue ? renderValue(value) : (value ?? "—")}</span>
             {!disabled && (
-              <EditIconButton onClick={startEdit} title={`Edit ${label}`} />
+              <EditIconButton // CAMPOS EDITÁVEIS
+                onClick={startEdit}
+                title={`Edit ${label}`}
+              />
             )}
           </>
         ) : (
@@ -284,7 +290,7 @@ function EditableField({
 }
 
 function DeptEndDateCellRenderer(props) {
-  const { value, data, onSaveEndDate, api } = props;
+  const { value, data, onSaveEndDate, api, emp } = props;
   const user = useAuth().user;
 
   const initialDate = React.useMemo(() => {
@@ -345,7 +351,13 @@ function DeptEndDateCellRenderer(props) {
         <>
           <span>{formatDate(value, DISPLAY_LOCALE)}</span>
           {user?.roles?.[0] === "HR" && (
-            <EditIconButton onClick={startEdit} title="Edit End" />
+            <EditIconButton //TABELAS
+              onClick={startEdit}
+              title="Edit End"
+              disabled={
+                String(emp?.businessEntityID) === String(user?.businessEntityID)
+              }
+            />
           )}
         </>
       ) : (
@@ -400,7 +412,7 @@ function AddDeptMovementModal({
   const [error, setError] = React.useState(null);
   const [saving, setSaving] = React.useState(false);
   const [startDate, setStartDate] = React.useState(
-    defaultStartDate ?? new Date()
+    defaultStartDate ?? new Date(),
   );
 
   React.useEffect(() => {
@@ -422,7 +434,7 @@ function AddDeptMovementModal({
     const dup = existingRows.some(
       (r) =>
         String(r.departmentID) === String(n) &&
-        toISODateOnly(r.startDate) === startYmd
+        toISODateOnly(r.startDate) === startYmd,
     );
     if (dup)
       return "A movement with this DepartmentID and Start Date already exists.";
@@ -812,7 +824,7 @@ export default function DashboardFuncionario() {
       emp.businessEntityID,
       oldPhone,
       newPhoneTrimmed,
-      typeId
+      typeId,
     );
     await reloadEmployee();
   }
@@ -838,11 +850,11 @@ export default function DashboardFuncionario() {
       await patchDepartmentHistoryEndDate(
         Number(emp.businessEntityID),
         rowData,
-        endYmd
+        endYmd,
       );
       await reloadEmployee();
     },
-    [emp?.businessEntityID, reloadEmployee]
+    [emp?.businessEntityID, reloadEmployee],
   );
 
   /* Create Department Movement */
@@ -860,7 +872,7 @@ export default function DashboardFuncionario() {
       if (hasOpenMovement) {
         // IMPORTANT: throw, do NOT return a string
         throw new Error(
-          "There's already an open movement. Close it before adding a new one."
+          "There's already an open movement. Close it before adding a new one.",
         );
       }
 
@@ -868,19 +880,19 @@ export default function DashboardFuncionario() {
       const startDupExists = histories.some(
         (r) =>
           String(r.departmentID) === String(departmentID) &&
-          toISODateOnly(r.startDate) === startYmd
+          toISODateOnly(r.startDate) === startYmd,
       );
 
       if (startDupExists) {
         throw new Error(
-          "A movement with this DepartmentID and Start Date already exists."
+          "A movement with this DepartmentID and Start Date already exists.",
         );
       }
 
       await createDepartmentHistory(
         emp.businessEntityID,
         departmentID,
-        startYmd
+        startYmd,
       );
 
       // Option A: server is source of truth — refresh canonical data
@@ -889,7 +901,7 @@ export default function DashboardFuncionario() {
       // ✅ Close modal AFTER success
       setShowAddDeptModal(false);
     },
-    [emp?.businessEntityID, emp?.employeeDepartmentHistories, reloadEmployee]
+    [emp?.businessEntityID, emp?.employeeDepartmentHistories, reloadEmployee],
   );
 
   /* Create Pay History (Rate + Frequency only; server sets RateChangeDate = now) */
@@ -899,7 +911,7 @@ export default function DashboardFuncionario() {
       await createPayHistory(emp.businessEntityID, rate, payFrequency);
       await reloadEmployee();
     },
-    [emp?.businessEntityID, reloadEmployee]
+    [emp?.businessEntityID, reloadEmployee],
   );
 
   /* AG Grid configuration */
@@ -912,7 +924,7 @@ export default function DashboardFuncionario() {
       editable: false,
       minWidth: 140,
     }),
-    []
+    [],
   );
 
   // DashboardFuncionario.jsx
@@ -935,14 +947,14 @@ export default function DashboardFuncionario() {
         field: "endDate",
         headerName: "End",
         cellRenderer: DeptEndDateCellRenderer,
-        cellRendererParams: { onSaveEndDate: onSaveDepartmentEndDate },
+        cellRendererParams: { onSaveEndDate: onSaveDepartmentEndDate, emp },
       },
       {
         headerName: "Status",
         valueGetter: (p) => (p.data?.endDate ? "Previous" : "Current"),
       },
     ],
-    [onSaveDepartmentEndDate]
+    [onSaveDepartmentEndDate],
   );
 
   const payCols = useMemo(
@@ -969,14 +981,14 @@ export default function DashboardFuncionario() {
         valueFormatter: (p) => formatPayFrequency(p.value),
       },
     ],
-    []
+    [],
   );
 
   const deptRowClassRules = useMemo(
     () => ({
       "row-current": (params) => !params.data?.endDate,
     }),
-    []
+    [],
   );
 
   const currentDepartment = useMemo(() => {
@@ -995,7 +1007,7 @@ export default function DashboardFuncionario() {
 
     // If no open, fallback to most recent by startDate
     const latest = histories.sort(
-      (a, b) => new Date(b.startDate) - new Date(a.startDate)
+      (a, b) => new Date(b.startDate) - new Date(a.startDate),
     )[0];
     return latest?.departmentName ?? null;
   }, [emp]);
@@ -1163,15 +1175,17 @@ React.useEffect(() => {
                 }}
               >
                 <h2 className="section-title">Department History</h2>
-                {user?.roles?.[0] === "HR" && (
-                  <button
-                    type="button"
-                    className="btn btn-primary"
-                    onClick={() => setShowAddDeptModal(true)}
-                  >
-                    + Add Movement
-                  </button>
-                )}
+                {user?.roles?.[0] !== "HR" ||
+                  (String(emp?.businessEntityID) !==
+                    String(user?.businessEntityID) && (
+                    <button
+                      type="button"
+                      className="btn btn-primary"
+                      onClick={() => setShowAddDeptModal(true)}
+                    >
+                      + Add Movement
+                    </button>
+                  ))}
               </div>
               <div className="vagas-grid-wrapper">
                 <AgGridReact
@@ -1200,15 +1214,17 @@ React.useEffect(() => {
                 }}
               >
                 <h2 className="section-title">Pay History</h2>
-                {user?.roles?.[0] === "HR" && (
-                  <button
-                    type="button"
-                    className="btn btn-primary"
-                    onClick={() => setShowAddPayModal(true)}
-                  >
-                    + Add Pay Change
-                  </button>
-                )}
+                {user?.roles?.[0] !== "HR" ||
+                  (String(emp?.businessEntityID) !==
+                    String(user?.businessEntityID) && (
+                    <button
+                      type="button"
+                      className="btn btn-primary"
+                      onClick={() => setShowAddPayModal(true)}
+                    >
+                      + Add Pay Change
+                    </button>
+                  ))}
               </div>
               <div className="vagas-grid-wrapper">
                 <AgGridReact
