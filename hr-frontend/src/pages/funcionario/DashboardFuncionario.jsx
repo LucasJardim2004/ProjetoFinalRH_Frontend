@@ -1000,7 +1000,18 @@ export default function DashboardFuncionario() {
     return latest?.departmentName ?? null;
   }, [emp]);
 
-  console.log(emp);
+React.useEffect(() => {
+  const prevHtml = document.documentElement.style.overflowY;
+  const prevBody = document.body.style.overflowY;
+ 
+  document.documentElement.style.overflowY = 'hidden';
+  document.body.style.overflowY = 'hidden';
+ 
+  return () => {
+    document.documentElement.style.overflowY = prevHtml;
+    document.body.style.overflowY = prevBody;
+  };
+}, []);
 
   return (
     <div className="vagas-page">

@@ -48,14 +48,6 @@
   padding: 10px;
 }
 
-
-html, body {
-  height: 100%;
-  margin: 0;
-  overflow-y: hidden; /* Let browser handle scrolling */
-}
-
-
 .vagas-page {
   min-height: 100vh; /* Fill viewport */
   overflow: hidden; /* Remove inner scroll */
