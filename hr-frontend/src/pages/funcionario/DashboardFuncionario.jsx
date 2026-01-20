@@ -773,9 +773,9 @@ export default function DashboardFuncionario() {
 
     try {
       await createNotification({
-        RecipientID: effectiveId, // quem recebe a notificação
-        ActorID: ownId, // quem fez
-        TargetID: effectiveId, // quem foi afetado
+        RecipientEmployeeId: effectiveId, // quem recebe a notificação
+        ActorEmployeeId: ownId, // quem fez
+        TargetEmployeeId: effectiveId, // quem foi afetado
         FieldName: fieldName,
         OldValue: oldValue,
         NewValue: newValue,
@@ -805,6 +805,7 @@ export default function DashboardFuncionario() {
   }
 
   async function saveGender(newValue) {
+    //TODO
     const v = String(newValue).toUpperCase();
     if (!["M", "F"].includes(v)) throw new Error("Invalid Gender (M/F).");
     const updated = await patchEmployee(emp.businessEntityID, { Gender: v });
@@ -812,6 +813,7 @@ export default function DashboardFuncionario() {
   }
 
   async function saveMaritalStatus(newValue) {
+    //TODO
     const v = String(newValue).toUpperCase();
     if (!["M", "S"].includes(v))
       throw new Error("Invalid Marital Status (M/S).");
@@ -822,40 +824,76 @@ export default function DashboardFuncionario() {
   }
 
   async function saveBirthDate(newDate) {
+    const oldDate = emp?.birthDate ? normalizeToDate(emp.birthDate) : null;
+    const newDateNorm = newDate ? normalizeToDate(newDate) : null;
+
     if (newDate && !isValidDate(newDate))
       throw new Error("Birth date is invalid.");
+
     const bodyDate = newDate ? toISODateOnly(newDate) : null;
     const updated = await patchEmployee(emp.businessEntityID, {
       BirthDate: bodyDate,
     });
     setEmp((prev) => ({ ...prev, ...updated }));
+
+    if ((oldDate?.getTime() || null) !== (newDateNorm?.getTime() || null)) {
+      await notifyProfileChange({
+        fieldName: "BirthDate",
+        oldValue: oldDate ? toISODateOnly(oldDate) : null,
+        newValue: newDateNorm ? toISODateOnly(newDateNorm) : null,
+      });
+    }
   }
 
   async function saveHireDate(newDate) {
+    const oldDate = emp?.hireDate ? normalizeToDate(emp.hireDate) : null;
+    const newDateNorm = newDate ? normalizeToDate(newDate) : null;
+
     if (newDate && !isValidDate(newDate))
       throw new Error("Hire date is invalid.");
+
     const bodyDate = newDate ? toISODateOnly(newDate) : null;
     const updated = await patchEmployee(emp.businessEntityID, {
       HireDate: bodyDate,
     });
     setEmp((prev) => ({ ...prev, ...updated }));
+
+    if ((oldDate?.getTime() || null) !== (newDateNorm?.getTime() || null)) {
+      await notifyProfileChange({
+        fieldName: "HireDate",
+        oldValue: oldDate ? toISODateOnly(oldDate) : null,
+        newValue: newDateNorm ? toISODateOnly(newDateNorm) : null,
+      });
+    }
   }
 
   async function saveEmail(newEmail) {
+    const oldEmail = emp.emailAddress;
+    const newEmailTrimmed = (newEmail ?? "").trim();
+
     if (newEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail)) {
       throw new Error("Invalid email format.");
     }
+
     const dto = await patchEmail(emp.businessEntityID, newEmail || null);
     setEmp((prev) => ({
       ...prev,
       emailAddress: dto?.EmailAddress ?? newEmail ?? null,
     }));
+
+    if ((oldEmail || "") !== (newEmailTrimmed || "")) {
+      await notifyProfileChange({
+        fieldName: "EmailAddress",
+        oldValue: oldEmail || null,
+        newValue: newEmailTrimmed || null,
+      });
+    }
   }
 
   async function savePhone(newPhone) {
-    const oldPhone = emp.phoneNumber; // current value from DB
+    const oldPhone = emp.phoneNumber; 
     const newPhoneTrimmed = (newPhone ?? "").trim();
-    // Use the type that came from the API; fallback to 1 only if null
+
     const typeId = Number.isInteger(emp.phoneNumberTypeID)
       ? emp.phoneNumberTypeID
       : 1;

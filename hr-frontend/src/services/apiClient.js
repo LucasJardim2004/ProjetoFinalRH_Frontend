@@ -200,6 +200,7 @@ export async function logout() {
 
 // POST /api/v1/Notification
 export async function createNotification(payload) {
+  console.log("[apiClient.createNotification] called");
   console.log("[apiClient.createNotification] payload:", payload);
   return apiFetch("/Notification", {
     method: "POST",
