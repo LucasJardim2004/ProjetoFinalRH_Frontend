@@ -890,7 +890,7 @@ export default function DashboardFuncionario() {
     }
   }
 
-  async function savePhone(newPhone) {
+  async function savePhone(newPhone) {// TODO
     const oldPhone = emp.phoneNumber; 
     const newPhoneTrimmed = (newPhone ?? "").trim();
 
