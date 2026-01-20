@@ -67,6 +67,7 @@ function formatDate(value, locale = DISPLAY_LOCALE) {
   const d = typeof value === "string" ? new Date(value) : value;
   return isNaN(d.getTime()) ? "—" : d.toLocaleDateString(locale);
 }
+
 function formatMaritalStatus(code) {
   if (!code) return "—";
   const c = String(code).toUpperCase();
@@ -74,6 +75,7 @@ function formatMaritalStatus(code) {
   if (c === "S") return "Single";
   return code;
 }
+
 function formatGender(code) {
   if (!code) return "—";
   const c = String(code).toUpperCase();
@@ -81,6 +83,7 @@ function formatGender(code) {
   if (c === "F") return "Female";
   return code;
 }
+
 function formatPayFrequency(value) {
   if (value === 1) return "Monthly";
   if (value === 2) return "Biweekly";
@@ -102,7 +105,6 @@ function isValidDate(d) {
   return d instanceof Date && !isNaN(d.getTime());
 }
 
-// Turns "YYYY-MM-DD" (or Date-like) into a Date at local midnight.
 function normalizeToDate(dateLike) {
   if (!dateLike) return null;
   if (dateLike instanceof Date) return new Date(dateLike.getTime());
@@ -695,6 +697,7 @@ const GENDER_OPTS = [
   { value: "M", label: "Male" },
   { value: "F", label: "Female" },
 ];
+
 const MARITAL_OPTS = [
   { value: "M", label: "Married" },
   { value: "S", label: "Single" },
@@ -715,11 +718,12 @@ export default function DashboardFuncionario() {
 
   const roles = Array.isArray(user?.roles) ? user.roles : [];
   const isHR = roles[0] === "HR";
-
   const paramId = businessEntityID ? Number(businessEntityID) : null;
   const ownId = user?.businessEntityID ? Number(user.businessEntityID) : null;
-
   const effectiveId = isHR ? paramId || ownId : ownId;
+
+  const actorEmployeeID = user?.businessEntityID;
+  const targetEmployeeID = emp?.businessEntityID;
 
   // Redirect non-HR users trying to access another employee's dashboard
   useEffect(() => {
@@ -755,18 +759,57 @@ export default function DashboardFuncionario() {
     })();
   }, [authLoading, reloadEmployee]);
 
-  async function saveJobTitle(newValue) {
-    const updated = await patchEmployee(emp.businessEntityID, {
-      JobTitle: newValue?.trim() || null,
-    });
-    setEmp((prev) => ({ ...prev, ...updated }));
+  const actorName = user?.fullName ?? user?.userName ?? "Unknown user";
+  const isEditingOtherProfile =
+    isHR && ownId && effectiveId && ownId !== effectiveId;
+
+  async function notifyProfileChange(changeText) {
+    if (!targetEmployeeID) return;
+
+    const prefix = isEditingOtherProfile
+      ? `HR ${actorName} updated your profile: `
+      : `You updated your profile: `;
+
+    const message = `${prefix}${changeText}`;
+
+    try {
+      // precisa de existir no teu apiClient:
+      // createNotification({ RecipientID: ..., Message: ... })
+      await createNotification({
+        RecipientID: targetEmployeeID,
+        Message: message,
+      });
+    } catch (err) {
+      // Não deve bloquear o update principal
+      console.warn("[notifyProfileChange] Failed to create notification", err);
+    }
   }
+
+  async function saveJobTitle(newValue) {
+  const oldValue = emp?.jobTitle ?? "";
+  const finalValue = newValue?.trim() || null;
+
+  const updated = await patchEmployee(emp.businessEntityID, {
+    JobTitle: finalValue,
+  });
+
+  setEmp((prev) => ({ ...prev, ...updated }));
+
+  // ✅ notificação depois do sucesso
+  if ((oldValue || "") !== (finalValue || "")) {
+    await notifyProfileChange(
+      `Job Title changed from "${oldValue || "—"}" to "${finalValue || "—"}".`
+    );
+  }
+}
+
   async function saveGender(newValue) {
     const v = String(newValue).toUpperCase();
     if (!["M", "F"].includes(v)) throw new Error("Invalid Gender (M/F).");
     const updated = await patchEmployee(emp.businessEntityID, { Gender: v });
     setEmp((prev) => ({ ...prev, ...updated }));
   }
+
   async function saveMaritalStatus(newValue) {
     const v = String(newValue).toUpperCase();
     if (!["M", "S"].includes(v))
@@ -776,6 +819,7 @@ export default function DashboardFuncionario() {
     });
     setEmp((prev) => ({ ...prev, ...updated }));
   }
+
   async function saveBirthDate(newDate) {
     if (newDate && !isValidDate(newDate))
       throw new Error("Birth date is invalid.");
@@ -785,6 +829,7 @@ export default function DashboardFuncionario() {
     });
     setEmp((prev) => ({ ...prev, ...updated }));
   }
+
   async function saveHireDate(newDate) {
     if (newDate && !isValidDate(newDate))
       throw new Error("Hire date is invalid.");
@@ -794,6 +839,7 @@ export default function DashboardFuncionario() {
     });
     setEmp((prev) => ({ ...prev, ...updated }));
   }
+
   async function saveEmail(newEmail) {
     if (newEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail)) {
       throw new Error("Invalid email format.");
@@ -1012,18 +1058,18 @@ export default function DashboardFuncionario() {
     return latest?.departmentName ?? null;
   }, [emp]);
 
-React.useEffect(() => {
-  const prevHtml = document.documentElement.style.overflowY;
-  const prevBody = document.body.style.overflowY;
- 
-  document.documentElement.style.overflowY = 'hidden';
-  document.body.style.overflowY = 'hidden';
- 
-  return () => {
-    document.documentElement.style.overflowY = prevHtml;
-    document.body.style.overflowY = prevBody;
-  };
-}, []);
+  React.useEffect(() => {
+    const prevHtml = document.documentElement.style.overflowY;
+    const prevBody = document.body.style.overflowY;
+
+    document.documentElement.style.overflowY = "hidden";
+    document.body.style.overflowY = "hidden";
+
+    return () => {
+      document.documentElement.style.overflowY = prevHtml;
+      document.body.style.overflowY = prevBody;
+    };
+  }, []);
 
   return (
     <div className="vagas-page">
@@ -1077,6 +1123,7 @@ React.useEffect(() => {
                   <span className="label">ID</span>
                   <span className="value">{emp.businessEntityID ?? "—"}</span>
                 </div>
+
                 <div className="detail-item">
                   <span className="label">National ID Number</span>
                   <span className="value">{emp.nationalIDNumber ?? "—"}</span>

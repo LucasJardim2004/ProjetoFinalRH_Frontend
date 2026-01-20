@@ -192,6 +192,19 @@ export async function logout() {
   clearAuth();
 }
 
+/**
+ * Notifications
+ * Controller: NotificationController
+ * Route base: api/v1/Notification
+ */
+
+// POST /api/v1/Notification
+export async function createNotification(payload) {
+  return apiFetch("/Notification", {
+    method: "POST",
+    body: payload,
+  });
+}
 
 /**
  * CandidateInfo
