@@ -8,6 +8,7 @@ import {
   patchDepartmentHistoryEndDate,
   createDepartmentHistory,
   createPayHistory,
+  createNotification,
   replacePhoneNonAtomic as replacePhoneApi,
 } from "../../services/apiClient";
 import "./dashboardFuncionario.css";
@@ -764,6 +765,10 @@ export default function DashboardFuncionario() {
     isHR && ownId && effectiveId && ownId !== effectiveId;
 
   async function notifyProfileChange(changeText) {
+    console.log("[notifyProfileChange] Preparing notification:");
+    console.log(" - Actor:", actorName, `(ID: ${actorEmployeeID})`);
+    console.log(" - Target:", targetEmployeeID);
+    console.log(" - Change:", changeText);
     if (!targetEmployeeID) return;
 
     const prefix = isEditingOtherProfile
@@ -773,8 +778,6 @@ export default function DashboardFuncionario() {
     const message = `${prefix}${changeText}`;
 
     try {
-      // precisa de existir no teu apiClient:
-      // createNotification({ RecipientID: ..., Message: ... })
       await createNotification({
         RecipientID: targetEmployeeID,
         Message: message,
@@ -788,6 +791,8 @@ export default function DashboardFuncionario() {
   async function saveJobTitle(newValue) {
   const oldValue = emp?.jobTitle ?? "";
   const finalValue = newValue?.trim() || null;
+  console.log("[Dashboard.saveJobTitle] old value:", oldValue);
+  console.log("[Dashboard.saveJobTitle] updating to:", finalValue);
 
   const updated = await patchEmployee(emp.businessEntityID, {
     JobTitle: finalValue,
