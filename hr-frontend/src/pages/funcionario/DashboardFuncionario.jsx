@@ -764,49 +764,45 @@ export default function DashboardFuncionario() {
   const isEditingOtherProfile =
     isHR && ownId && effectiveId && ownId !== effectiveId;
 
-  async function notifyProfileChange(changeText) {
-    console.log("[notifyProfileChange] Preparing notification:");
-    console.log(" - Actor:", actorName, `(ID: ${actorEmployeeID})`);
-    console.log(" - Target:", targetEmployeeID);
-    console.log(" - Change:", changeText);
-    if (!targetEmployeeID) return;
-
-    const prefix = isEditingOtherProfile
-      ? `HR ${actorName} updated your profile: `
-      : `You updated your profile: `;
-
-    const message = `${prefix}${changeText}`;
+  async function notifyProfileChange({
+    fieldName,
+    oldValue = null,
+    newValue = null,
+  }) {
+    if (!effectiveId || !ownId) return;
 
     try {
       await createNotification({
-        RecipientID: targetEmployeeID,
-        Message: message,
+        RecipientID: effectiveId, // quem recebe a notificação
+        ActorID: ownId, // quem fez
+        TargetID: effectiveId, // quem foi afetado
+        FieldName: fieldName,
+        OldValue: oldValue,
+        NewValue: newValue,
       });
     } catch (err) {
-      // Não deve bloquear o update principal
-      console.warn("[notifyProfileChange] Failed to create notification", err);
+      console.warn("[notifyProfileChange] Failed:", err);
     }
   }
 
   async function saveJobTitle(newValue) {
-  const oldValue = emp?.jobTitle ?? "";
-  const finalValue = newValue?.trim() || null;
-  console.log("[Dashboard.saveJobTitle] old value:", oldValue);
-  console.log("[Dashboard.saveJobTitle] updating to:", finalValue);
+    const oldValue = emp?.jobTitle ?? "";
+    const finalValue = newValue?.trim() || null;
 
-  const updated = await patchEmployee(emp.businessEntityID, {
-    JobTitle: finalValue,
-  });
+    const updated = await patchEmployee(emp.businessEntityID, {
+      JobTitle: finalValue,
+    });
 
-  setEmp((prev) => ({ ...prev, ...updated }));
+    setEmp((prev) => ({ ...prev, ...updated }));
 
-  // ✅ notificação depois do sucesso
-  if ((oldValue || "") !== (finalValue || "")) {
-    await notifyProfileChange(
-      `Job Title changed from "${oldValue || "—"}" to "${finalValue || "—"}".`
-    );
+    if ((oldValue || "") !== (finalValue || "")) {
+      await notifyProfileChange({
+        fieldName: "JobTitle",
+        oldValue: oldValue || null,
+        newValue: finalValue || null,
+      });
+    }
   }
-}
 
   async function saveGender(newValue) {
     const v = String(newValue).toUpperCase();
