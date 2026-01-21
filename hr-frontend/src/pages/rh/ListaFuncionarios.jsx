@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 // AG Grid core + módulos
@@ -43,12 +43,24 @@ const ApplyCellRenderer = (props) => {
 function ListaFuncionarios() {
   const [rowData, setRowData] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(50);
+  const [totalCount, setTotalCount] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
+
+  useEffect(() => {
     async function loadEmployees() {
+      setLoading(true);
       try {
-        const employees = await getEmployees();
+        const response = await getEmployees(currentPage, pageSize, searchQuery || null);
+        const employees = response.data;
+        const pagination = response.pagination;
 
         const mapped = employees.map((e) => ({
           businessEntityID: e.businessEntityID,
@@ -61,24 +73,17 @@ function ListaFuncionarios() {
         }));
 
         setRowData(mapped);
+        setTotalCount(pagination.totalCount);
+        setTotalPages(pagination.totalPages);
       } catch (err) {
         console.error("Error loading employees", err);
+      } finally {
+        setLoading(false);
       }
     }
 
     loadEmployees();
-  }, []);
-
-  const filteredRowData = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase();
-    if (!q) return rowData;
-
-    return rowData.filter((row) => {
-      const nid = (row.nationalIDNumber ?? "").toString().toLowerCase();
-      const jobTitle = (row.jobTitle ?? "").toString().toLowerCase();
-      return nid.includes(q) || jobTitle.includes(q);
-    });
-  }, [rowData, searchQuery]);
+  }, [currentPage, pageSize, searchQuery]);
 
   const defaultColDef = {
     sortable: false,
@@ -143,22 +148,87 @@ function ListaFuncionarios() {
           onChange={(e) => setSearchQuery(e.target.value)}
         />
       </div>
-      {filteredRowData.length === 0 && (
+      {loading && (
+        <p className="no-results" style={{ fontWeight: "bold", color: "#666" }}>Loading employees...</p>
+      )}
+
+      {!loading && totalCount === 0 && (
         <p className="no-results" style={{ fontWeight: "bold", color: "red" }}>No employees found.</p>
       )}
 
       <div className="vagas-card">
-        <div className="ag-theme-quartz vagas-grid-wrapper">
+        <div className="ag-theme-quartz vagas-grid-wrapper" style={{ display: "flex", flexDirection: "column" }}>
           <AgGridReact
-            rowData={filteredRowData}
+            rowData={rowData}
             columnDefs={colDefs}
             defaultColDef={defaultColDef}
             animateRows={true}
             rowHeight={40}
             headerHeight={40}
-            pagination={true}
-            paginationPageSize={20}
+            pagination={false}
+            style={{ flex: 1 }}
           />
+          <div style={{ 
+            padding: "10px 12px", 
+            backgroundColor: "#f5f5f5", 
+            borderTop: "1px solid #ddd",
+            fontSize: "13px",
+            color: "#666",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            gap: "15px"
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <label htmlFor="pageSize">Page Size:</label>
+              <select 
+                id="pageSize"
+                value={pageSize}
+                onChange={(e) => {
+                  setPageSize(parseInt(e.target.value));
+                  setCurrentPage(1);
+                }}
+                style={{ padding: "4px 8px", cursor: "pointer" }}
+              >
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+            </div>
+            <span>{(currentPage - 1) * pageSize + 1} to {Math.min(currentPage * pageSize, totalCount)} of {totalCount}</span>
+            <div style={{ display: "flex", gap: "5px", alignItems: "center" }}>
+              <button 
+                onClick={() => setCurrentPage(1)}
+                disabled={currentPage === 1}
+                style={{ padding: "4px 8px", cursor: currentPage === 1 ? "default" : "pointer", opacity: currentPage === 1 ? 0.5 : 1 }}
+              >
+                ⏮
+              </button>
+              <button 
+                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                disabled={currentPage === 1}
+                style={{ padding: "4px 8px", cursor: currentPage === 1 ? "default" : "pointer", opacity: currentPage === 1 ? 0.5 : 1 }}
+              >
+                ◀
+              </button>
+              <span style={{ padding: "0px 8px", minWidth: "80px", textAlign: "center" }}>Page {currentPage} of {totalPages}</span>
+              <button 
+                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                disabled={currentPage === totalPages}
+                style={{ padding: "4px 8px", cursor: currentPage === totalPages ? "default" : "pointer", opacity: currentPage === totalPages ? 0.5 : 1 }}
+              >
+                ▶
+              </button>
+              <button 
+                onClick={() => setCurrentPage(totalPages)}
+                disabled={currentPage === totalPages}
+                style={{ padding: "4px 8px", cursor: currentPage === totalPages ? "default" : "pointer", opacity: currentPage === totalPages ? 0.5 : 1 }}
+              >
+                ⏭
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>

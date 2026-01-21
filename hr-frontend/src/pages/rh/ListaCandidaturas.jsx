@@ -208,7 +208,7 @@ function ListaCandidaturas() {
       </div>
 
       <div className="vagas-card">
-        <div className="ag-theme-quartz vagas-grid-wrapper">
+        <div className="ag-theme-quartz vagas-grid-wrapper" style={{ display: "flex", flexDirection: "column" }}>
           <AgGridReact
             rowData={rowData}
             columnDefs={colDefs}
@@ -218,7 +218,17 @@ function ListaCandidaturas() {
             headerHeight={40}
             pagination={true}
             paginationPageSize={20}
+            style={{ flex: 1 }}
           />
+          <div style={{ 
+            padding: "10px 12px", 
+            backgroundColor: "#f5f5f5", 
+            borderTop: "1px solid #ddd",
+            fontSize: "13px",
+            color: "#666"
+          }}>
+            Page Size: 20 | Showing {rowData.length > 0 ? rowData.length : 0} candidates
+          </div>
         </div>
       </div>
     </div>

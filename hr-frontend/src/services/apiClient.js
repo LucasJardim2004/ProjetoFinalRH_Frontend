@@ -145,8 +145,14 @@ export function deleteOpening(id) {
   return apiFetch(`/Opening/${id}`, { method: "DELETE" });
 }
 
-export function getEmployees() {
-  return apiFetch("/Employee");
+export function getEmployees(pageNumber = 1, pageSize = 50, searchTerm = null) {
+  const params = new URLSearchParams();
+  params.append("pageNumber", pageNumber);
+  params.append("pageSize", pageSize);
+  if (searchTerm) {
+    params.append("searchTerm", searchTerm);
+  }
+  return apiFetch(`/Employee?${params.toString()}`);
 }
 
 // POST /api/v1/Employee
