@@ -113,8 +113,11 @@ const ApplyCellRenderer = (props) => {
 function Vagas() {
   const [rowData, setRowData] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-  const { user, loading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
 
   function handleGoToCreateOpening() {
     navigate("/rh/criarVaga");
@@ -149,6 +152,7 @@ function Vagas() {
 
   useEffect(() => {
     async function loadOpenings() {
+      setLoading(true);
       try {
         const openings = await getOpenings();
 
@@ -163,13 +167,15 @@ function Vagas() {
         setRowData(mapped);
       } catch (err) {
         console.error("Error loading openings", err);
+      } finally {
+        setLoading(false);
       }
     }
 
     loadOpenings();
   }, []);
 
-  const filteredRowData = useMemo(() => {
+  const allFilteredData = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
     if (!q) return rowData;
 
@@ -178,6 +184,16 @@ function Vagas() {
       return jobTitle.includes(q);
     });
   }, [rowData, searchQuery]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
+
+  const filteredRowData = useMemo(() => {
+    const startIdx = (currentPage - 1) * pageSize;
+    const endIdx = startIdx + pageSize;
+    return allFilteredData.slice(startIdx, endIdx);
+  }, [allFilteredData, currentPage, pageSize]);
 
   const defaultColDef = {
     sortable: false,
@@ -229,12 +245,16 @@ function Vagas() {
           onChange={(e) => setSearchQuery(e.target.value)}
         />
       </div>
-      {filteredRowData.length === 0 && (
+      {loading && (
+        <p className="no-results" style={{ fontWeight: "bold", color: "#666" }}>Loading openings...</p>
+      )}
+
+      {!loading && filteredRowData.length === 0 && (
         <p className="no-results" style={{ fontWeight: "bold", color: "red" }}>No openings found.</p>
       )}
 
       <div className="vagas-card">
-        <div className="ag-theme-quartz vagas-grid-wrapper">
+        <div className="ag-theme-quartz vagas-grid-wrapper" style={{ display: "flex", flexDirection: "column" }}>
           <AgGridReact
             rowData={filteredRowData}
             columnDefs={colDefs}
@@ -242,9 +262,70 @@ function Vagas() {
             animateRows={true}
             rowHeight={40}
             headerHeight={40}
-            pagination={true}
-            paginationPageSize={20}
+            pagination={false}
+            style={{ flex: 1 }}
           />
+          <div style={{ 
+            padding: "10px 12px", 
+            backgroundColor: "#f5f5f5", 
+            borderTop: "1px solid #ddd",
+            fontSize: "13px",
+            color: "#666",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            gap: "15px"
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <label htmlFor="pageSize">Page Size:</label>
+              <select 
+                id="pageSize"
+                value={pageSize}
+                onChange={(e) => {
+                  setPageSize(parseInt(e.target.value));
+                  setCurrentPage(1);
+                }}
+                style={{ padding: "4px 8px", cursor: "pointer" }}
+              >
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+            </div>
+            <span>{(currentPage - 1) * pageSize + 1} to {Math.min(currentPage * pageSize, allFilteredData.length)} of {allFilteredData.length}</span>
+            <div style={{ display: "flex", gap: "5px", alignItems: "center" }}>
+              <button 
+                onClick={() => setCurrentPage(1)}
+                disabled={currentPage === 1}
+                style={{ padding: "4px 8px", cursor: currentPage === 1 ? "default" : "pointer", opacity: currentPage === 1 ? 0.5 : 1 }}
+              >
+                ⏮
+              </button>
+              <button 
+                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                disabled={currentPage === 1}
+                style={{ padding: "4px 8px", cursor: currentPage === 1 ? "default" : "pointer", opacity: currentPage === 1 ? 0.5 : 1 }}
+              >
+                ◀
+              </button>
+              <span style={{ padding: "0px 8px", minWidth: "80px", textAlign: "center" }}>Page {currentPage} of {Math.ceil(allFilteredData.length / pageSize) || 1}</span>
+              <button 
+                onClick={() => setCurrentPage(Math.min(Math.ceil(allFilteredData.length / pageSize), currentPage + 1))}
+                disabled={currentPage === Math.ceil(allFilteredData.length / pageSize)}
+                style={{ padding: "4px 8px", cursor: currentPage === Math.ceil(allFilteredData.length / pageSize) ? "default" : "pointer", opacity: currentPage === Math.ceil(allFilteredData.length / pageSize) ? 0.5 : 1 }}
+              >
+                ▶
+              </button>
+              <button 
+                onClick={() => setCurrentPage(Math.ceil(allFilteredData.length / pageSize))}
+                disabled={currentPage === Math.ceil(allFilteredData.length / pageSize)}
+                style={{ padding: "4px 8px", cursor: currentPage === Math.ceil(allFilteredData.length / pageSize) ? "default" : "pointer", opacity: currentPage === Math.ceil(allFilteredData.length / pageSize) ? 0.5 : 1 }}
+              >
+                ⏭
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
