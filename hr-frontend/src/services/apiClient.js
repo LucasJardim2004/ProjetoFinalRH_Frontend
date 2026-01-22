@@ -727,3 +727,23 @@ export async function replacePhoneNonAtomic(businessEntityID, oldPhoneNumber, ne
   return dto;
 }
 
+export async function getHREmployeeIds() {
+  return apiFetch("/Employee/role/hr");
+}
+
+export async function getUnreadNotifications(employeeId) {
+  return apiFetch(`/Notification/recipient/${employeeId}`);
+}
+
+export async function markNotificationAsRead(notificationId) {
+  return apiFetch(`/Notification/${notificationId}/mark-read`, {
+    method: "PATCH",
+  });
+}
+
+export async function deleteNotification(notificationId) {
+  return apiFetch(`/Notification/${notificationId}`, {
+    method: "DELETE",
+  });
+}
+
