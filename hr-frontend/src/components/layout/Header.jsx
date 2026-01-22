@@ -12,7 +12,7 @@ function Header({ user }) {
 
   const roles = Array.isArray(user?.roles) ? user.roles : [];
 
-  if (roles[0] !== "HR" && roles[0] !== "Employee") return null;
+  const isAllowed = roles[0] === "HR" || roles[0] === "Employee"
 
   // Load notifications on mount
   useEffect(() => {
@@ -65,6 +65,8 @@ function Header({ user }) {
         });
     }
   }, [showNotifications, user?.businessEntityID]);
+
+  if (!isAllowed) return null;
 
   async function handleLogout() {
     try {
