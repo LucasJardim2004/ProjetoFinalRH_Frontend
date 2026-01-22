@@ -92,7 +92,15 @@ function ListaFuncionarios() {
     flex: 1,
   };
 
-  const [colDefs] = useState([
+  const [colDefs] = useState([ 
+    {
+      field: "businessEntityID",
+      headerName: "ID",
+      flex: 0.6,
+      maxWidth: 120,
+      sortable: true,
+      filter: "agNumberColumnFilter",
+    },
     {
       field: "jobTitle",
       headerName: "Job Title",
@@ -146,7 +154,7 @@ function ListaFuncionarios() {
           variant="outlined"
           fullWidth
           label="Search Employees"
-          placeholder="Type Job Title or National ID..."
+          placeholder="Type BusinessEntityID or Job Title..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
