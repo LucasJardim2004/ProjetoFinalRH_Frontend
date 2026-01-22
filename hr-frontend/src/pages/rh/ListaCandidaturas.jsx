@@ -101,6 +101,8 @@ function ListaCandidaturas() {
         const mapped = (candidates || []).map((c) => ({
           id: c.id ?? c.ID,
           jobCandidateID: c.jobCandidateID ?? c.JobCandidateID,
+          firstName : c.firstName,
+          lastName : c.lastName,
           fullName: [c.firstName, c.middleName, c.lastName]
             .filter(Boolean)
             .join(" "),
