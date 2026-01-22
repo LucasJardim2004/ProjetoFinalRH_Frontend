@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { logout, getUnreadNotifications, markNotificationAsRead, deleteNotification } from "../../services/apiClient";
+import { logout, getUnreadNotifications, markNotificationAsRead, deleteNotification, deleteAllReadNotifications } from "../../services/apiClient";
 import { useState, useEffect } from "react";
 
 import "./layout.css";
@@ -216,6 +216,38 @@ function Header({ user }) {
                         </button>
                       </div>
                     ))}
+                    {notifications.some((n) => n.isRead) && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          deleteAllReadNotifications(user.businessEntityID)
+                            .then(() => {
+                              setNotifications((prev) =>
+                                prev.filter((n) => !n.isRead)
+                              );
+                            })
+                            .catch((err) => {
+                              console.warn("[Header] Failed to delete all read notifications:", err);
+                            });
+                        }}
+                        style={{
+                          width: "100%",
+                          padding: 10,
+                          marginTop: 8,
+                          background: "#f5f5f5",
+                          border: "1px solid #ddd",
+                          borderRadius: 4,
+                          cursor: "pointer",
+                          fontSize: 13,
+                          color: "#666",
+                          transition: "background 0.2s",
+                        }}
+                        onMouseEnter={(e) => (e.target.style.background = "#eee")}
+                        onMouseLeave={(e) => (e.target.style.background = "#f5f5f5")}
+                      >
+                        Remove All Read
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
