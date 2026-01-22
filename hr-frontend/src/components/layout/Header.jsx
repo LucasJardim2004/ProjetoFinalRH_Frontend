@@ -247,7 +247,7 @@ function Header({ user }) {
                         onMouseEnter={(e) => (e.target.style.background = "#eee")}
                         onMouseLeave={(e) => (e.target.style.background = "#f5f5f5")}
                       >
-                        Remove All Read
+                        Remove All
                       </button>
                     )}
                   </div>
