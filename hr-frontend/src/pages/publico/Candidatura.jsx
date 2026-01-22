@@ -6,7 +6,8 @@ import {
   createCandidateInfo,
   createJobCandidate,
   uploadCandidateCv,
-  apiFetch
+  apiFetch,
+  getEmployees
 } from "../../services/apiClient";
 
 function Candidatura() {
@@ -72,36 +73,37 @@ async function handleSubmit(e) {
     const comment = (formData.get("comentarios") ?? "").toString().trim();
     const cvFile = formData.get("cv");
 
-    //Check if email already exists in Users table
+
+    // Check if National ID already exists in Employee table
     try {
-      const response = await apiFetch(`/Auth/exists?email=${encodeURIComponent(email)}`);
-      if (response?.exists) {
-        alert("This email is already registered as a user. Please use a different email or log in.");
-        return;
-      }
-    } catch (err) {
-      console.warn("[handleSubmit] email uniqueness check failed:", err);
+        // searchTerm will match NationalIDNumber because controller supports it
+        const searchResponse = await getEmployees(1, 100, nationalID);
+
+        const employees = searchResponse?.data ?? [];
+
+        const conflict = employees.find((emp) => {
+          const existingNid =
+            emp.NationalIDNumber ??
+            emp.nationalIDNumber ??
+            emp.NationalId ??
+            emp.nationalId;
+
+          return (
+            existingNid &&
+            nationalID &&
+            String(existingNid).trim() === String(nationalID).trim()
+          );
+        });
+
+        if (conflict) {
+          alert("This National ID is already registered as an Employee.");
+          return;
+        }
+      } catch (err) {
+        console.warn("[handleSubmit] NID check failed:", err);
     }
 
-    //Check if National ID already exists in Employee table
-    try {
-      const employees = (employeesResponse?.data ?? []);
-      const conflict = (employees ?? []).find((emp) => {
-        const existingNid = emp.NationalIDNumber ?? emp.nationalIDNumber ?? emp.NationalId ?? emp.nationalId;
-        return existingNid && nationalID && String(existingNid).trim() === String(nationalID).trim();
-      });
-      if (conflict) {
-        alert("This National ID is already registered as an Employee. Please verify your information.");
-        return;
-      }
-    } catch (err) {
-      console.warn("[handleSubmit] National ID check failed:", err);
-    }
 
-    if (!(cvFile instanceof File)) {
-      alert("Please upload a valid CV file.");
-      return;
-    }
 
     // Create JobCandidate
     const jobCandidatePayload = { businessEntityID: null, resume: null };
