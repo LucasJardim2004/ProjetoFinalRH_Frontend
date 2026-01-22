@@ -20,6 +20,53 @@ function Candidatura() {
 
   const [birthDateValue, setBirthDateValue] = useState("");
   const [birthDateError, setBirthDateError] = useState("");
+  
+// Validation rules
+const NAME_MIN = 2;
+const NID_MIN = 5;
+const NID_MAX = 15;
+const PHONE_MIN = 7;
+const PHONE_MAX = 15;
+
+// Allow letters with diacritics, spaces, apostrophes, hyphens (e.g., "Ana-Maria", "O’Neil")
+const NAME_REGEX = /^[\p{L}][\p{L} .'-]{1,}$/u;
+// Alphanumeric plus dashes; adjust if your business rule differs
+const NATIONAL_ID_REGEX = /^[A-Za-z0-9-]+$/;
+// We’ll count digits for the phone; UI may include + or spaces
+function countDigits(str) {
+  return (str || "").replace(/\D+/g, "").length;
+}
+
+function validateName(label, value) {
+  const v = (value ?? "").trim();
+  if (!v) return `${label} is required.`;
+  if (v.length < NAME_MIN) return `${label} must be at least ${NAME_MIN} characters.`;
+  if (!NAME_REGEX.test(v)) return `${label} contains invalid characters.`;
+  return "";
+}
+
+function validateNationalId(value) {
+  const v = (value ?? "").trim();
+  if (!v) return "National ID is required.";
+  if (v.length < NID_MIN || v.length > NID_MAX) {
+    return `National ID must be between ${NID_MIN} and ${NID_MAX} characters.`;
+  }
+  if (!NATIONAL_ID_REGEX.test(v)) {
+    return "National ID can only contain letters, numbers, and dashes.";
+  }
+  return "";
+}
+
+function validatePhone(value) {
+  const raw = (value ?? "").trim();
+  const digits = countDigits(raw);
+  if (!digits) return "Phone number is required.";
+  if (digits < PHONE_MIN || digits > PHONE_MAX) {
+    return `Phone number must have between ${PHONE_MIN} and ${PHONE_MAX} digits.`;
+  }
+  return "";
+}
+
 
   function isAtLeast18YearsOld(dateString) {
     const today = new Date();
@@ -102,8 +149,39 @@ async function handleSubmit(e) {
       } catch (err) {
         console.warn("[handleSubmit] NID check failed:", err);
     }
+   
+  // After extracting all formData values (firstName, lastName, nationalID, phoneNumber, etc.)
+  const fnErr = validateName("First name", firstName);
+  if (fnErr) {
+    alert(fnErr);
+    document.getElementById("firstName")?.focus();
+    setSubmitting(false);
+    return;
+  }
 
+  const lnErr = validateName("Last name", lastName);
+  if (lnErr) {
+    alert(lnErr);
+    document.getElementById("lastName")?.focus();
+    setSubmitting(false);
+    return;
+  }
 
+  const nidErr = validateNationalId(nationalID);
+  if (nidErr) {
+    alert(nidErr);
+    document.getElementById("nationalId")?.focus();
+    setSubmitting(false);
+    return;
+  }
+
+  const phoneErr = validatePhone(phoneNumber);
+  if (phoneErr) {
+    alert(phoneErr);
+    document.getElementById("telefone")?.focus();
+    setSubmitting(false);
+    return;
+  }
 
     // Create JobCandidate
     const jobCandidatePayload = { businessEntityID: null, resume: null };
