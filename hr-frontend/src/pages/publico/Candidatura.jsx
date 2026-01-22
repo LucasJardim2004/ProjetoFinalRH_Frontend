@@ -61,7 +61,8 @@ async function handleSubmit(e) {
 
     const formData = new FormData(e.target);
     const jobTitle = jobTitleFromState ?? formData.get("jobTitle") ?? "";
-    const fullName = (formData.get("nome") ?? "").toString().trim();
+    const firstName = (formData.get("firstName") ?? "").toString().trim();
+    const lastName = (formData.get("lastName") ?? "").toString().trim();
     const email = (formData.get("email") ?? "").toString().trim();
     const phoneNumber = (formData.get("telefone") ?? "").toString().trim();
     const birthDateRaw = formData.get("birthdate") ?? "";
@@ -71,7 +72,7 @@ async function handleSubmit(e) {
     const comment = (formData.get("comentarios") ?? "").toString().trim();
     const cvFile = formData.get("cv");
 
-    // ✅ Check if email already exists in Users table
+    //Check if email already exists in Users table
     try {
       const response = await apiFetch(`/Auth/exists?email=${encodeURIComponent(email)}`);
       if (response?.exists) {
@@ -82,9 +83,9 @@ async function handleSubmit(e) {
       console.warn("[handleSubmit] email uniqueness check failed:", err);
     }
 
-    // ✅ Check if National ID already exists in Employee table
+    //Check if National ID already exists in Employee table
     try {
-      const employees = await apiFetch("/Employee"); // or use getEmployees()
+      const employees = (employeesResponse?.data ?? []);
       const conflict = (employees ?? []).find((emp) => {
         const existingNid = emp.NationalIDNumber ?? emp.nationalIDNumber ?? emp.NationalId ?? emp.nationalId;
         return existingNid && nationalID && String(existingNid).trim() === String(nationalID).trim();
@@ -101,11 +102,6 @@ async function handleSubmit(e) {
       alert("Please upload a valid CV file.");
       return;
     }
-
-    const nameParts = fullName.split(" ").filter(Boolean);
-    const firstName = nameParts[0] ?? "";
-    const lastName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : "";
-    const middleName = nameParts.length > 2 ? nameParts.slice(1, nameParts.length - 1).join(" ") : "";
 
     // Create JobCandidate
     const jobCandidatePayload = { businessEntityID: null, resume: null };
@@ -126,7 +122,6 @@ async function handleSubmit(e) {
       maritalStatus,
       gender,
       firstName,
-      middleName,
       lastName,
       email,
       phoneNumber,
@@ -192,16 +187,17 @@ async function handleSubmit(e) {
             <h2>Personal details</h2>
             <div className="section-grid">
               <div className="form-group">
-                <label htmlFor="nome">
-                  Full name <span className="required">*</span>
+                <label htmlFor="firstName">
+                  First name <span className="required">*</span>
                 </label>
-                <input
-                  id="nome"
-                  name="nome"
-                  type="text"
-                  placeholder="e.g. Your Name"
-                  required
-                />
+                <input id="firstName" name="firstName" type="text" required />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="lastName">
+                  Last name <span className="required">*</span>
+                </label>
+                <input id="lastName" name="lastName" type="text" required />
               </div>
 
               <div className="form-group">

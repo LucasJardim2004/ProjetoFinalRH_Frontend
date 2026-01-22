@@ -605,7 +605,7 @@ export async function createDepartmentHistory(businessEntityID, departmentID, st
   return {
     departmentID: dto?.DepartmentID ?? dto?.departmentID ?? departmentID,
     startDate: dto?.StartDate ?? dto?.startDate ?? startDateYmd ?? new Date().toISOString(),
-    endDate
+    endDate: dto?.EndDate ?? dto?.endDate ?? null
   }
 }
  
