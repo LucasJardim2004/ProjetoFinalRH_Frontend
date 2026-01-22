@@ -8,6 +8,7 @@ import {
   patchDepartmentHistoryEndDate,
   createDepartmentHistory,
   createPayHistory,
+  createNotification,
   replacePhoneNonAtomic as replacePhoneApi,
 } from "../../services/apiClient";
 import "./dashboardFuncionario.css";
@@ -67,6 +68,7 @@ function formatDate(value, locale = DISPLAY_LOCALE) {
   const d = typeof value === "string" ? new Date(value) : value;
   return isNaN(d.getTime()) ? "—" : d.toLocaleDateString(locale);
 }
+
 function formatMaritalStatus(code) {
   if (!code) return "—";
   const c = String(code).toUpperCase();
@@ -74,6 +76,7 @@ function formatMaritalStatus(code) {
   if (c === "S") return "Single";
   return code;
 }
+
 function formatGender(code) {
   if (!code) return "—";
   const c = String(code).toUpperCase();
@@ -81,6 +84,7 @@ function formatGender(code) {
   if (c === "F") return "Female";
   return code;
 }
+
 function formatPayFrequency(value) {
   if (value === 1) return "Monthly";
   if (value === 2) return "Biweekly";
@@ -102,7 +106,6 @@ function isValidDate(d) {
   return d instanceof Date && !isNaN(d.getTime());
 }
 
-// Turns "YYYY-MM-DD" (or Date-like) into a Date at local midnight.
 function normalizeToDate(dateLike) {
   if (!dateLike) return null;
   if (dateLike instanceof Date) return new Date(dateLike.getTime());
@@ -695,6 +698,7 @@ const GENDER_OPTS = [
   { value: "M", label: "Male" },
   { value: "F", label: "Female" },
 ];
+
 const MARITAL_OPTS = [
   { value: "M", label: "Married" },
   { value: "S", label: "Single" },
@@ -715,11 +719,12 @@ export default function DashboardFuncionario() {
 
   const roles = Array.isArray(user?.roles) ? user.roles : [];
   const isHR = roles[0] === "HR";
-
   const paramId = businessEntityID ? Number(businessEntityID) : null;
   const ownId = user?.businessEntityID ? Number(user.businessEntityID) : null;
-
   const effectiveId = isHR ? paramId || ownId : ownId;
+
+  const actorEmployeeID = user?.businessEntityID;
+  const targetEmployeeID = emp?.businessEntityID;
 
   // Redirect non-HR users trying to access another employee's dashboard
   useEffect(() => {
@@ -755,19 +760,60 @@ export default function DashboardFuncionario() {
     })();
   }, [authLoading, reloadEmployee]);
 
-  async function saveJobTitle(newValue) {
-    const updated = await patchEmployee(emp.businessEntityID, {
-      JobTitle: newValue?.trim() || null,
-    });
-    setEmp((prev) => ({ ...prev, ...updated }));
+  const actorName = user?.fullName ?? user?.userName ?? "Unknown user";
+  const isEditingOtherProfile =
+    isHR && ownId && effectiveId && ownId !== effectiveId;
+
+  async function notifyProfileChange({
+    fieldName,
+    oldValue = null,
+    newValue = null,
+  }) {
+    if (!effectiveId || !ownId) return;
+
+    try {
+      await createNotification({
+        RecipientEmployeeId: effectiveId, // quem recebe a notificação
+        ActorEmployeeId: ownId, // quem fez
+        TargetEmployeeId: effectiveId, // quem foi afetado
+        FieldName: fieldName,
+        OldValue: oldValue,
+        NewValue: newValue,
+      });
+    } catch (err) {
+      console.warn("[notifyProfileChange] Failed:", err);
+    }
   }
+
+  async function saveJobTitle(newValue) {
+    const oldValue = emp?.jobTitle ?? "";
+    const finalValue = newValue?.trim() || null;
+
+    const updated = await patchEmployee(emp.businessEntityID, {
+      JobTitle: finalValue,
+    });
+
+    setEmp((prev) => ({ ...prev, ...updated }));
+
+    if ((oldValue || "") !== (finalValue || "")) {
+      await notifyProfileChange({
+        fieldName: "JobTitle",
+        oldValue: oldValue || null,
+        newValue: finalValue || null,
+      });
+    }
+  }
+
   async function saveGender(newValue) {
+    //TODO
     const v = String(newValue).toUpperCase();
     if (!["M", "F"].includes(v)) throw new Error("Invalid Gender (M/F).");
     const updated = await patchEmployee(emp.businessEntityID, { Gender: v });
     setEmp((prev) => ({ ...prev, ...updated }));
   }
+
   async function saveMaritalStatus(newValue) {
+    //TODO
     const v = String(newValue).toUpperCase();
     if (!["M", "S"].includes(v))
       throw new Error("Invalid Marital Status (M/S).");
@@ -776,39 +822,78 @@ export default function DashboardFuncionario() {
     });
     setEmp((prev) => ({ ...prev, ...updated }));
   }
+
   async function saveBirthDate(newDate) {
+    const oldDate = emp?.birthDate ? normalizeToDate(emp.birthDate) : null;
+    const newDateNorm = newDate ? normalizeToDate(newDate) : null;
+
     if (newDate && !isValidDate(newDate))
       throw new Error("Birth date is invalid.");
+
     const bodyDate = newDate ? toISODateOnly(newDate) : null;
     const updated = await patchEmployee(emp.businessEntityID, {
       BirthDate: bodyDate,
     });
     setEmp((prev) => ({ ...prev, ...updated }));
+
+    if ((oldDate?.getTime() || null) !== (newDateNorm?.getTime() || null)) {
+      await notifyProfileChange({
+        fieldName: "BirthDate",
+        oldValue: oldDate ? toISODateOnly(oldDate) : null,
+        newValue: newDateNorm ? toISODateOnly(newDateNorm) : null,
+      });
+    }
   }
+
   async function saveHireDate(newDate) {
+    const oldDate = emp?.hireDate ? normalizeToDate(emp.hireDate) : null;
+    const newDateNorm = newDate ? normalizeToDate(newDate) : null;
+
     if (newDate && !isValidDate(newDate))
       throw new Error("Hire date is invalid.");
+
     const bodyDate = newDate ? toISODateOnly(newDate) : null;
     const updated = await patchEmployee(emp.businessEntityID, {
       HireDate: bodyDate,
     });
     setEmp((prev) => ({ ...prev, ...updated }));
+
+    if ((oldDate?.getTime() || null) !== (newDateNorm?.getTime() || null)) {
+      await notifyProfileChange({
+        fieldName: "HireDate",
+        oldValue: oldDate ? toISODateOnly(oldDate) : null,
+        newValue: newDateNorm ? toISODateOnly(newDateNorm) : null,
+      });
+    }
   }
+
   async function saveEmail(newEmail) {
+    const oldEmail = emp.emailAddress;
+    const newEmailTrimmed = (newEmail ?? "").trim();
+
     if (newEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail)) {
       throw new Error("Invalid email format.");
     }
+
     const dto = await patchEmail(emp.businessEntityID, newEmail || null);
     setEmp((prev) => ({
       ...prev,
       emailAddress: dto?.EmailAddress ?? newEmail ?? null,
     }));
+
+    if ((oldEmail || "") !== (newEmailTrimmed || "")) {
+      await notifyProfileChange({
+        fieldName: "EmailAddress",
+        oldValue: oldEmail || null,
+        newValue: newEmailTrimmed || null,
+      });
+    }
   }
 
-  async function savePhone(newPhone) {
-    const oldPhone = emp.phoneNumber; // current value from DB
+  async function savePhone(newPhone) {// TODO
+    const oldPhone = emp.phoneNumber; 
     const newPhoneTrimmed = (newPhone ?? "").trim();
-    // Use the type that came from the API; fallback to 1 only if null
+
     const typeId = Number.isInteger(emp.phoneNumberTypeID)
       ? emp.phoneNumberTypeID
       : 1;
@@ -1012,18 +1097,18 @@ export default function DashboardFuncionario() {
     return latest?.departmentName ?? null;
   }, [emp]);
 
-React.useEffect(() => {
-  const prevHtml = document.documentElement.style.overflowY;
-  const prevBody = document.body.style.overflowY;
- 
-  document.documentElement.style.overflowY = 'hidden';
-  document.body.style.overflowY = 'hidden';
- 
-  return () => {
-    document.documentElement.style.overflowY = prevHtml;
-    document.body.style.overflowY = prevBody;
-  };
-}, []);
+  React.useEffect(() => {
+    const prevHtml = document.documentElement.style.overflowY;
+    const prevBody = document.body.style.overflowY;
+
+    document.documentElement.style.overflowY = "hidden";
+    document.body.style.overflowY = "hidden";
+
+    return () => {
+      document.documentElement.style.overflowY = prevHtml;
+      document.body.style.overflowY = prevBody;
+    };
+  }, []);
 
   return (
     <div className="vagas-page">
@@ -1077,6 +1162,7 @@ React.useEffect(() => {
                   <span className="label">ID</span>
                   <span className="value">{emp.businessEntityID ?? "—"}</span>
                 </div>
+
                 <div className="detail-item">
                   <span className="label">National ID Number</span>
                   <span className="value">{emp.nationalIDNumber ?? "—"}</span>

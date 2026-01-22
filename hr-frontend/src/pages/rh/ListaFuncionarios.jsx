@@ -96,7 +96,7 @@ function ListaFuncionarios() {
     {
       field: "jobTitle",
       headerName: "Job Title",
-      flex: 1.5,
+      flex: 2,
     },
     {
       field: "nationalIDNumber",

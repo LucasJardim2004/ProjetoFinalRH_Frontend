@@ -203,7 +203,7 @@ function Vagas() {
   };
 
   const [colDefs] = useState([
-    { field: "jobTitle", headerName: "Job Title", flex: 1 },
+    { field: "jobTitle", headerName: "Job Title", flex: 2 },
     { field: "description", headerName: "Description", flex: 2 },
     { field: "dateCreated", headerName: "Date Created" },
     {
