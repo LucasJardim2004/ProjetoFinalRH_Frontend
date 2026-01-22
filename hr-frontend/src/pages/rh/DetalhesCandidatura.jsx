@@ -1,14 +1,12 @@
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { deleteJobCandidate, deleteCandidateInfo,createEmployee,registerEmployee,updateUserRoles } from "../../services/apiClient"; // adjust path
 
+
 function DetalhesCandidatura() {
   const { jobCandidateID } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
   const candidate = location.state?.candidate;
-    const [firstName, ...lastNameParts] = candidate.fullName.trim().split(" ");
-    const lastName = lastNameParts.join(" ");
-
 
   const handleAccept = async () => {
     try {
@@ -16,18 +14,18 @@ function DetalhesCandidatura() {
         console.error("Candidate not found in navigation state");
         return;
       }
+      const firstName = candidate.firstName;
+      const lastName  = candidate.lastName;
 
-      const [firstName, ...lastNameParts] = String(candidate.fullName || "").trim().split(" ");
-      const lastName = lastNameParts.join(" ");
+      console.log(candidate);
 
-      // 1) Create Employee
       const employeeDto = {
         PersonType: "EM",
         FirstName: firstName,
         LastName: lastName,
         EmailAddress: candidate.email,
         PhoneNumber: candidate.phoneNumber,
-        DepartmentId: 1, // adjust if needed
+        DepartmentId: 1, // TODO: adjust
         EmployeeDTO: {
           JobTitle: "New Hire",
           NationalIDNumber: candidate.nationalID,
@@ -37,52 +35,44 @@ function DetalhesCandidatura() {
           HireDate: new Date().toISOString().split("T")[0],
         },
       };
+
       const employee = await createEmployee(employeeDto);
-      
       const beid = employee?.BusinessEntityID ?? employee?.businessEntityID;
 
-      console.log("[accept] employee created BEID =", beid);
-
-      // 2) Register User (Register already gives "Employee" role)
+      // Register user, then clean up candidate records
       const registerDto = {
         UserName: candidate.email.split("@")[0],
         Email: candidate.email,
-        FullName: candidate.fullName,
+        FullName: candidate.fullName, // ok to keep for display
         BusinessEntityID: beid,
-        Password: "Portugal2025!", // TODO: generate or let user set
+        Password: "Portugal2025!", // TODO: generate
       };
-      const registerResult = await registerEmployee(registerDto);
-      console.log("[accept] register result", registerResult);
+      await registerEmployee(registerDto);
 
-      // 3) Delete Candidate records
       await deleteCandidateInfo(candidate.id);
       await deleteJobCandidate(jobCandidateID);
-      
 
-      // 4) Redirect
       navigate("/Vagas");
     } catch (err) {
       console.error("Error accepting candidate:", err);
     }
   };
 
- 
+
   const handleRefuse = async () => {
     try {
+      // Delete CandidateInfo FIRST (this removes the FK constraint)
+      await deleteCandidateInfo(candidate.id);
+      console.log("Candidate deleted from CandidateInfos:", candidate.id);
+
+      // Now safe to delete JobCandidate
       await deleteJobCandidate(jobCandidateID);
       console.log("Candidate deleted from JobCandidates:", jobCandidateID);
+      
     } catch (err) {
-      console.error("Error deleting from JobCandidates:", err);
+      console.error("Error refusing candidate:", err);
     }
 
-    try {
-      await deleteCandidateInfo(candidate.id); // CandidateInfo ID
-      console.log("Candidate deleted from CandidateInfos:", candidate.id);
-    } catch (err) {
-      console.error("Error deleting from CandidateInfos:", err);
-    }
-
-    // Redirect back to ListaCandidaturas
     navigate("/Vagas");
   };
 
