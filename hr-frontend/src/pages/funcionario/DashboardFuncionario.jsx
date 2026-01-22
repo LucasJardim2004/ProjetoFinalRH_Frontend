@@ -10,6 +10,7 @@ import {
   createPayHistory,
   createNotification,
   replacePhoneNonAtomic as replacePhoneApi,
+  getHREmployeeIds,
 } from "../../services/apiClient";
 import "./dashboardFuncionario.css";
 import "ag-grid-community/styles/ag-grid.css";
@@ -712,6 +713,7 @@ export default function DashboardFuncionario() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [emp, setEmp] = useState(null);
+  const [hrEmployeeIds, setHrEmployeeIds] = useState([]);
 
   const [showAddDeptModal, setShowAddDeptModal] = useState(false);
   const [showAddPayModal, setShowAddPayModal] = useState(false);
@@ -760,6 +762,19 @@ export default function DashboardFuncionario() {
     })();
   }, [authLoading, reloadEmployee]);
 
+  // Fetch HR employee IDs
+  useEffect(() => {
+    (async function fetchHRList() {
+      try {
+        const hrIds = await getHREmployeeIds();
+        setHrEmployeeIds(Array.isArray(hrIds) ? hrIds : []);
+      } catch (err) {
+        console.warn("[DashboardFuncionario] Failed to fetch HR list:", err);
+        setHrEmployeeIds([]);
+      }
+    })();
+  }, []);
+
   const actorName = user?.fullName ?? user?.userName ?? "Unknown user";
   const isEditingOtherProfile =
     isHR && ownId && effectiveId && ownId !== effectiveId;
@@ -774,6 +789,28 @@ export default function DashboardFuncionario() {
     try {
       await createNotification({
         RecipientEmployeeId: effectiveId, // quem recebe a notificação
+        ActorEmployeeId: ownId, // quem fez
+        TargetEmployeeId: effectiveId, // quem foi afetado
+        FieldName: fieldName,
+        OldValue: oldValue,
+        NewValue: newValue,
+      });
+    } catch (err) {
+      console.warn("[notifyProfileChange] Failed:", err);
+    }
+  }
+
+  async function notifyHRProfileChange({
+    fieldName,
+    oldValue = null,
+    newValue = null,
+    hrId = null
+  }) {
+    if (!effectiveId || !ownId) return;
+
+    try {
+      await createNotification({
+        RecipientEmployeeId: hrId, // quem recebe a notificação
         ActorEmployeeId: ownId, // quem fez
         TargetEmployeeId: effectiveId, // quem foi afetado
         FieldName: fieldName,
@@ -805,15 +842,34 @@ export default function DashboardFuncionario() {
   }
 
   async function saveGender(newValue) {
-    //TODO
+    const oldValue = emp?.gender ?? "";
     const v = String(newValue).toUpperCase();
     if (!["M", "F"].includes(v)) throw new Error("Invalid Gender (M/F).");
     const updated = await patchEmployee(emp.businessEntityID, { Gender: v });
     setEmp((prev) => ({ ...prev, ...updated }));
+
+    if ((oldValue || "") !== (v || "")) {
+      if (!isHR) {
+        hrEmployeeIds.forEach(async (hrId) => {
+          await notifyHRProfileChange({
+          fieldName: "Gender",
+          oldValue: oldValue || null,
+          newValue: v || null,
+          hrId
+        });
+        });
+      } else {
+        await notifyProfileChange({
+          fieldName: "Gender",
+          oldValue: oldValue || null,
+          newValue: v || null,
+        });
+      }
+    }
   }
 
   async function saveMaritalStatus(newValue) {
-    //TODO
+    const oldValue = emp?.maritalStatus ?? "";
     const v = String(newValue).toUpperCase();
     if (!["M", "S"].includes(v))
       throw new Error("Invalid Marital Status (M/S).");
@@ -821,6 +877,25 @@ export default function DashboardFuncionario() {
       MaritalStatus: v,
     });
     setEmp((prev) => ({ ...prev, ...updated }));
+
+    if ((oldValue || "") !== (v || "")) {
+      if (!isHR) {
+        hrEmployeeIds.forEach(async (hrId) => {
+          await notifyHRProfileChange({
+          fieldName: "MaritalStatus",
+          oldValue: oldValue || null,
+          newValue: v || null,
+          hrId
+        });
+        });
+      } else {
+        await notifyProfileChange({
+          fieldName: "MaritalStatus",
+          oldValue: oldValue || null,
+          newValue: v || null,
+        });
+      }
+    }
   }
 
   async function saveBirthDate(newDate) {
