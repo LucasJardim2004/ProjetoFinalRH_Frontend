@@ -747,3 +747,9 @@ export async function deleteNotification(notificationId) {
   });
 }
 
+export async function deleteAllReadNotifications(employeeId) {
+  return apiFetch(`/Notification/recipient/${employeeId}/read`, {
+    method: "DELETE",
+  });
+}
+
