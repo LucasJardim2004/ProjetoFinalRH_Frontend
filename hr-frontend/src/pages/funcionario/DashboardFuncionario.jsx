@@ -133,6 +133,7 @@ function EditIconButton({ onClick, title = "Edit", disabled = false }) {
         background: "transparent",
         fontSize: 16,
         opacity: disabled ? 0 : 1,
+        cursor : "pointer"
       }}
     >
       ✏️

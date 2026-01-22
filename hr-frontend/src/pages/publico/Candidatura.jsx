@@ -255,6 +255,7 @@ async function handleSubmit(e) {
                   type="text"
                   placeholder="e.g. 12345678"
                   required
+                  maxLength={10}
                 />
               </div>
 
