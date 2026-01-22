@@ -110,6 +110,11 @@ async function handleSubmit(e) {
     const createdJobCandidate = await createJobCandidate(jobCandidatePayload);
     const jobCandidateID = createdJobCandidate?.jobCandidateID;
     if (!jobCandidateID) throw new Error("Could not retrieve JobCandidateID from API response.");
+    if (!cvFile || cvFile.size === 0) {
+      alert("Please upload a CV before submitting.");
+      setSubmitting(false);
+      return;
+    }
 
     // Upload CV
     await uploadCandidateCv(jobCandidateID, cvFile);
@@ -306,7 +311,6 @@ async function handleSubmit(e) {
                   type="file"
                   accept=".pdf,.doc,.docx"
                   onChange={handleFileChange}
-                  required
                 />
                 <span className="cv-filename">{cvName}</span>
               </div>

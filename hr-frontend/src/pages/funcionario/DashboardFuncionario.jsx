@@ -13,7 +13,6 @@ import {
   getHREmployeeIds,
 } from "../../services/apiClient";
 import "./dashboardFuncionario.css";
-import "ag-grid-community/styles/ag-grid.css";
 import { useAuth } from "/src/AuthProvider.jsx";
 import {
   ModuleRegistry,
@@ -119,6 +118,12 @@ function normalizeToDate(dateLike) {
   return null;
 }
 
+const notifyError = (msg) => {
+  if (!msg) return;
+  window.alert(msg);
+};
+
+
 function EditIconButton({ onClick, title = "Edit", disabled = false }) {
   return (
     <button
@@ -152,6 +157,7 @@ function EditableField({
   disabled = false,
   parse,
   validate,
+  onError
 }) {
   const [editing, setEditing] = React.useState(false);
   const [local, setLocal] = React.useState(value ?? "");
@@ -165,12 +171,13 @@ function EditableField({
   }, [value]);
 
   function startEdit() {
-    if (disabled || saving) return; // Prevent editing if disabled
+    if (disabled || saving) return;
     setError(null);
     setLocal(value ?? "");
     setEditing(true);
   }
 
+  
   async function commit() {
     setError(null);
     const raw = local;
@@ -179,8 +186,9 @@ function EditableField({
     if (validate) {
       const msg = validate(finalValue);
       if (msg) {
-        setError(msg);
-        return;
+        if (onError) onError(msg);
+        else window.alert(msg);
+        return; // keep editor open for correction
       }
     }
 
@@ -189,11 +197,14 @@ function EditableField({
       await onSave(finalValue);
       setEditing(false);
     } catch (e) {
-      setError(e?.message || "Failed to save");
+      const message = e?.message || "Failed to save";
+      if (onError) onError(message);
+      else window.alert(message);
     } finally {
       setSaving(false);
     }
   }
+
 
   function cancel() {
     setError(null);
@@ -282,20 +293,12 @@ function EditableField({
           </>
         )}
       </div>
-      {error && (
-        <div
-          style={{ color: "red", marginTop: 4, fontSize: 12 }}
-          aria-live="polite"
-        >
-          {error}
-        </div>
-      )}
     </div>
   );
 }
 
 function DeptEndDateCellRenderer(props) {
-  const { value, data, onSaveEndDate, api, emp } = props;
+  const { value, data, onSaveEndDate, onError, api, emp } = props;
   const user = useAuth().user;
 
   const initialDate = React.useMemo(() => {
@@ -330,21 +333,20 @@ function DeptEndDateCellRenderer(props) {
     return toISODateOnly(initialDate) === toISODateOnly(local);
   }, [initialDate, local]);
 
+  
   async function commit() {
     setError(null);
     const d = local;
-    const msg = validateEndDate(d);
-    if (msg) {
-      setError(msg);
-      return;
-    }
+
     try {
       setSaving(true);
-      await onSaveEndDate?.(data, d);
+      await onSaveEndDate?.(data, d); // validation happens inside the handler
       setEditing(false);
       api?.refreshCells?.({ force: true });
     } catch (e) {
-      setError(e?.message || "Failed to save EndDate");
+      const message = e?.message || "Failed to save EndDate";
+      if (onError) onError(message);
+      else window.alert(message);
     } finally {
       setSaving(false);
     }
@@ -392,14 +394,6 @@ function DeptEndDateCellRenderer(props) {
           >
             Cancel
           </button>
-          {error && (
-            <span
-              style={{ color: "red", fontSize: 12, marginLeft: 6 }}
-              aria-live="polite"
-            >
-              {error}
-            </span>
-          )}
         </>
       )}
     </div>
@@ -1108,7 +1102,7 @@ export default function DashboardFuncionario() {
         field: "endDate",
         headerName: "End",
         cellRenderer: DeptEndDateCellRenderer,
-        cellRendererParams: { onSaveEndDate: onSaveDepartmentEndDate, emp },
+        cellRendererParams: { onSaveEndDate: onSaveDepartmentEndDate, onError: notifyError, emp },
       },
       {
         headerName: "Status",
@@ -1227,6 +1221,7 @@ export default function DashboardFuncionario() {
                       : null
                   }
                   onSave={saveEmail}
+                  onError={notifyError}
                   disabled={
                     user?.roles?.[0] !== "HR" ||
                     String(emp?.businessEntityID) ===
@@ -1248,6 +1243,7 @@ export default function DashboardFuncionario() {
                   label="Job Title"
                   value={emp.jobTitle ?? ""}
                   onSave={saveJobTitle}
+                  onError={notifyError}
                   type="text"
                   disabled={
                     user?.roles?.[0] !== "HR" ||
@@ -1265,6 +1261,7 @@ export default function DashboardFuncionario() {
                     { value: "F", label: "Female" },
                   ]}
                   onSave={saveGender}
+                  onError={notifyError}
                 />
 
                 <EditableField
@@ -1277,6 +1274,7 @@ export default function DashboardFuncionario() {
                     { value: "S", label: "Single" },
                   ]}
                   onSave={saveMaritalStatus}
+                  onError={notifyError}
                 />
 
                 <EditableField
@@ -1285,6 +1283,7 @@ export default function DashboardFuncionario() {
                   renderValue={(v) => formatDate(v, DISPLAY_LOCALE)}
                   type="date"
                   onSave={saveBirthDate}
+                  onError={notifyError}
                   parse={(d) => d}
                   validate={(d) =>
                     d && !isValidDate(d) ? "Birth date is invalid." : null
@@ -1302,6 +1301,7 @@ export default function DashboardFuncionario() {
                   renderValue={(v) => formatDate(v, DISPLAY_LOCALE)}
                   type="date"
                   onSave={saveHireDate}
+                  onError={notifyError}
                   parse={(d) => d}
                   validate={(d) =>
                     d && !isValidDate(d) ? "Hire date is invalid." : null
@@ -1323,6 +1323,7 @@ export default function DashboardFuncionario() {
                       : null
                   }
                   onSave={savePhone}
+                  onError={notifyError}
                 />
               </div>
             </section>
