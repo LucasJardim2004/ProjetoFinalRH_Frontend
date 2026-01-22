@@ -1319,11 +1319,11 @@ export default function DashboardFuncionario() {
                   defaultColDef={defaultColDef}
                   theme={myTheme}
                   animateRows={true}
-                  rowHeight={40}
+                  rowHeight={64}
                   headerHeight={40}
                   pagination={false}
                   paginationPageSize={10}
-                  domLayout="autoHeight"
+                  style={{ height: "400px" }}
                 />
               </div>
             </section>
