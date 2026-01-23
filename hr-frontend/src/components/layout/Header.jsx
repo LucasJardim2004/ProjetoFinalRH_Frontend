@@ -46,7 +46,15 @@ function Header({ user }) {
                 console.warn(`[Header] Failed to mark notification ${notif.notificationID} as read:`, err);
               })
             )
-          );
+          ).then(() => {
+            // Update local state to reflect that notifications are now read
+            setNotifications((prev) =>
+              prev.map((notif) => ({
+                ...notif,
+                isRead: true,
+              }))
+            );
+          });
         })
         .catch((err) => {
           console.warn("[Header] Failed to fetch notifications:", err);
@@ -213,7 +221,7 @@ function Header({ user }) {
                         </button>
                       </div>
                     ))}
-                    {notifications.some((n) => n.isRead) && (
+                    {notifications.length > 0 && (
                       <button
                         type="button"
                         onClick={() => {
