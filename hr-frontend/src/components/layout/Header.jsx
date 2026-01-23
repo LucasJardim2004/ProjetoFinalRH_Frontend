@@ -19,7 +19,8 @@ function Header({ user }) {
     if (user?.businessEntityID) {
       getUnreadNotifications(user.businessEntityID)
         .then((data) => {
-          setNotifications(Array.isArray(data) ? data : []);
+          const notifArray = Array.isArray(data) ? data : [];
+          setNotifications([...notifArray].reverse());
         })
         .catch((err) => {
           console.warn("[Header] Failed to fetch notifications on mount:", err);
@@ -28,14 +29,14 @@ function Header({ user }) {
     }
   }, [user?.businessEntityID]);
 
-  // Fetch notifications when dropdown opens and mark as read
+  // Fetch notifications when dropdown opens
   useEffect(() => {
     if (showNotifications && user?.businessEntityID) {
       setLoadingNotifications(true);
       getUnreadNotifications(user.businessEntityID)
         .then((data) => {
           const notifList = Array.isArray(data) ? data : [];
-          setNotifications(notifList);
+          setNotifications([...notifList].reverse());
 
           // Mark all unread notifications as read
           const unreadNotifs = notifList.filter((n) => !n.isRead);
@@ -45,16 +46,7 @@ function Header({ user }) {
                 console.warn(`[Header] Failed to mark notification ${notif.notificationID} as read:`, err);
               })
             )
-          ).then(() => {
-            // Update state to reflect that notifications are now read
-            setNotifications((prev) =>
-              prev.map((n) =>
-                unreadNotifs.some((u) => u.notificationID === n.notificationID)
-                  ? { ...n, isRead: true }
-                  : n
-              )
-            );
-          });
+          );
         })
         .catch((err) => {
           console.warn("[Header] Failed to fetch notifications:", err);
@@ -160,7 +152,7 @@ function Header({ user }) {
                   </p>
                 ) : (
                   <div>
-                    {notifications.map((notif) => (
+                    {[...notifications].reverse().map((notif) => (
                       <div
                         key={notif.notificationID}
                         style={{
@@ -176,7 +168,10 @@ function Header({ user }) {
                       >
                         <div style={{ flex: 1 }}>
                           <p style={{ margin: "0 0 4px 0", color: "#333" }}>
-                            {notif.fieldName} was changed
+                            {user?.roles[0] === "HR" && notif.targetEmployeeId
+                              ? `[ID: ${notif.targetEmployeeId}] ${notif.fieldName} was changed`
+                              : `${notif.fieldName} was changed`
+                            }
                           </p>
                           <p style={{ margin: 0, color: "#999", fontSize: 12 }}>
                             {notif.oldValue} → {notif.newValue}

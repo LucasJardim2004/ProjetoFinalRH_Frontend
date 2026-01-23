@@ -72,7 +72,20 @@ function ListaFuncionarios() {
           birthDate: e.birthDate.slice(0, 10),
         }));
 
-        setRowData(mapped);
+        // Apply client-side filtering for prefix matching on ID and contains matching on job title
+        let filtered = mapped;
+        if (searchQuery && searchQuery.trim()) {
+          filtered = mapped.filter((item) => {
+            const idStr = String(item.businessEntityID);
+            const jobTitleLower = (item.jobTitle || "").toLowerCase();
+            const searchLower = searchQuery.toLowerCase();
+            
+            // Match if ID starts with search term or job title contains search term
+            return idStr.startsWith(searchQuery) || jobTitleLower.includes(searchLower);
+          });
+        }
+
+        setRowData(filtered);
         setTotalCount(pagination.totalCount);
         setTotalPages(pagination.totalPages);
       } catch (err) {
@@ -159,37 +172,38 @@ function ListaFuncionarios() {
           onChange={(e) => setSearchQuery(e.target.value)}
         />
       </div>
-      {loading && (
-        <p className="no-results" style={{ fontWeight: "bold", color: "#666" }}>Loading employees...</p>
-      )}
-
-      {!loading && totalCount === 0 && (
-        <p className="no-results" style={{ fontWeight: "bold", color: "red" }}>No employees found.</p>
-      )}
 
       <div className="vagas-card">
-        <div className="ag-theme-quartz vagas-grid-wrapper" style={{ display: "flex", flexDirection: "column" }}>
-          <AgGridReact
-            rowData={rowData}
-            columnDefs={colDefs}
-            defaultColDef={defaultColDef}
-            animateRows={true}
-            rowHeight={40}
-            headerHeight={40}
-            pagination={false}
-            style={{ flex: 1 }}
-          />
-          <div style={{ 
-            padding: "10px 12px", 
-            backgroundColor: "#f5f5f5", 
-            borderTop: "1px solid #ddd",
-            fontSize: "13px",
-            color: "#666",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            gap: "15px"
-          }}>
+        <div className="ag-theme-quartz vagas-grid-wrapper" style={{ display: "flex", flexDirection: "column", minHeight: "500px" }}>
+          {!loading && totalCount === 0 && (
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", flex: 1 }}>
+              <p className="no-results" style={{ fontWeight: "bold", color: "red" }}>No employees found.</p>
+            </div>
+          )}
+
+          {!loading && totalCount > 0 && (
+            <>
+              <AgGridReact
+                rowData={rowData}
+                columnDefs={colDefs}
+                defaultColDef={defaultColDef}
+                animateRows={true}
+                rowHeight={40}
+                headerHeight={40}
+                pagination={false}
+                style={{ flex: 1 }}
+              />
+              <div style={{ 
+                padding: "10px 12px", 
+                backgroundColor: "#f5f5f5", 
+                borderTop: "1px solid #ddd",
+                fontSize: "13px",
+                color: "#666",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                gap: "15px"
+              }}>
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               <label htmlFor="pageSize">Page Size:</label>
               <select 
@@ -240,6 +254,8 @@ function ListaFuncionarios() {
               </button>
             </div>
           </div>
+            </>
+          )}
         </div>
       </div>
     </div>

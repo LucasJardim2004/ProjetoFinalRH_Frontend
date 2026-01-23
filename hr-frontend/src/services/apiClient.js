@@ -705,6 +705,13 @@ export function deletePersonPhone(businessEntityID, phoneNumber, phoneNumberType
   });
 }
 
+export function patchPersonPhone(businessEntityID, phoneNumber, phoneNumberTypeID, dto) {
+  return apiFetch(`/PersonPhone/${businessEntityID}/${encodeURIComponent(phoneNumber)}/${phoneNumberTypeID}`, {
+    method: "PATCH",
+    body: dto
+  });
+}
+
 export async function replacePhoneNonAtomic(businessEntityID, oldPhoneNumber, newPhoneNumber, phoneNumberTypeID) {
   console.log("[apiClient.replacePhone] deleting old:", { businessEntityID, oldPhoneNumber, phoneNumberTypeID });
   try {

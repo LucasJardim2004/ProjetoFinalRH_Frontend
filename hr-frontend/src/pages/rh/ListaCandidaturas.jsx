@@ -175,6 +175,7 @@ function ListaCandidaturas() {
       field: "CVFileName",
       maxWidth: 140,
       cellRenderer: CvButtonRenderer,
+      cellStyle: { display: "flex", justifyContent: "center", alignItems: "center" },
     },
   ]);
 

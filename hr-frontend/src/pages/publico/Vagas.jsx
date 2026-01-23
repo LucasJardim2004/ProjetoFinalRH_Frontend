@@ -245,37 +245,38 @@ function Vagas() {
           onChange={(e) => setSearchQuery(e.target.value)}
         />
       </div>
-      {loading && (
-        <p className="no-results" style={{ fontWeight: "bold", color: "#666" }}>Loading openings...</p>
-      )}
-
-      {!loading && filteredRowData.length === 0 && (
-        <p className="no-results" style={{ fontWeight: "bold", color: "red" }}>No openings found.</p>
-      )}
 
       <div className="vagas-card">
-        <div className="ag-theme-quartz vagas-grid-wrapper" style={{ display: "flex", flexDirection: "column" }}>
-          <AgGridReact
-            rowData={filteredRowData}
-            columnDefs={colDefs}
-            defaultColDef={defaultColDef}
-            animateRows={true}
-            rowHeight={40}
-            headerHeight={40}
-            pagination={false}
-            style={{ flex: 1 }}
-          />
-          <div style={{ 
-            padding: "10px 12px", 
-            backgroundColor: "#f5f5f5", 
-            borderTop: "1px solid #ddd",
-            fontSize: "13px",
-            color: "#666",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            gap: "15px"
-          }}>
+        <div className="ag-theme-quartz vagas-grid-wrapper" style={{ display: "flex", flexDirection: "column", minHeight: "500px" }}>
+          {!loading && filteredRowData.length === 0 && (
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", flex: 1 }}>
+              <p className="no-results" style={{ fontWeight: "bold", color: "red" }}>No openings found.</p>
+            </div>
+          )}
+
+          {filteredRowData.length > 0 && (
+            <>
+              <AgGridReact
+                rowData={filteredRowData}
+                columnDefs={colDefs}
+                defaultColDef={defaultColDef}
+                animateRows={true}
+                rowHeight={40}
+                headerHeight={40}
+                pagination={false}
+                style={{ flex: 1 }}
+              />
+              <div style={{ 
+                padding: "10px 12px", 
+                backgroundColor: "#f5f5f5", 
+                borderTop: "1px solid #ddd",
+                fontSize: "13px",
+                color: "#666",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                gap: "15px"
+              }}>
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               <label htmlFor="pageSize">Page Size:</label>
               <select 
@@ -326,6 +327,8 @@ function Vagas() {
               </button>
             </div>
           </div>
+            </>
+          )}
         </div>
       </div>
     </div>

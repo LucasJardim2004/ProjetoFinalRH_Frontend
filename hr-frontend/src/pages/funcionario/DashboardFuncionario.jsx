@@ -844,8 +844,9 @@ export default function DashboardFuncionario() {
     setEmp((prev) => ({ ...prev, ...updated }));
 
     if ((oldValue || "") !== (v || "")) {
-      if (!isHR) {
-        hrEmployeeIds.forEach(async (hrId) => {
+      if (ownId === effectiveId) {
+        const filteredHrIds = hrEmployeeIds.filter(id => id !== ownId);
+        filteredHrIds.forEach(async (hrId) => {
           await notifyHRProfileChange({
           fieldName: "Gender",
           oldValue: oldValue || null,
@@ -874,8 +875,9 @@ export default function DashboardFuncionario() {
     setEmp((prev) => ({ ...prev, ...updated }));
 
     if ((oldValue || "") !== (v || "")) {
-      if (!isHR) {
-        hrEmployeeIds.forEach(async (hrId) => {
+      if (ownId === effectiveId) {
+        const filteredHrIds = hrEmployeeIds.filter(id => id !== ownId);
+        filteredHrIds.forEach(async (hrId) => {
           await notifyHRProfileChange({
           fieldName: "MaritalStatus",
           oldValue: oldValue || null,
@@ -960,7 +962,7 @@ export default function DashboardFuncionario() {
     }
   }
 
-  async function savePhone(newPhone) {// TODO
+  async function savePhone(newPhone) {
     const oldPhone = emp.phoneNumber; 
     const newPhoneTrimmed = (newPhone ?? "").trim();
 
@@ -975,13 +977,38 @@ export default function DashboardFuncionario() {
       phoneNumberTypeID: typeId,
     });
 
-    await replacePhoneApi(
-      emp.businessEntityID,
-      oldPhone,
-      newPhoneTrimmed,
-      typeId,
-    );
-    await reloadEmployee();
+    try {
+      await replacePhoneApi(
+        emp.businessEntityID,
+        oldPhone,
+        newPhoneTrimmed,
+        typeId,
+      );
+      await reloadEmployee();
+
+      if ((oldPhone || "") !== (newPhoneTrimmed || "")) {
+        if (ownId === effectiveId) {
+          const filteredHrIds = hrEmployeeIds.filter(id => id !== ownId);
+          filteredHrIds.forEach(async (hrId) => {
+            await notifyHRProfileChange({
+              fieldName: "Phone Number",
+              oldValue: oldPhone || null,
+              newValue: newPhoneTrimmed || null,
+              hrId
+            });
+          });
+        } else {
+          await notifyProfileChange({
+            fieldName: "Phone Number",
+            oldValue: oldPhone || null,
+            newValue: newPhoneTrimmed || null,
+          });
+        }
+      }
+    } catch (err) {
+      console.error("[Dashboard.savePhone] Error:", err);
+      throw new Error(`Failed to update phone number: ${err?.message || "Unknown error"}`);
+    }
   }
 
   /* Dept EndDate (renderer) */
@@ -1008,8 +1035,29 @@ export default function DashboardFuncionario() {
         endYmd,
       );
       await reloadEmployee();
+
+      // Notify about department end date change
+      if (isHR && ownId === effectiveId) {
+        const filteredHrIds = hrEmployeeIds.filter(id => id !== ownId);
+        await Promise.all(
+          filteredHrIds.map(hrId =>
+            notifyHRProfileChange({
+              fieldName: "Department End Date",
+              oldValue: rowData.endDate ? toLocalYmd(rowData.endDate) : "No end date",
+              newValue: endYmd,
+              hrId
+            })
+          )
+        );
+      } else {
+        await notifyProfileChange({
+          fieldName: "Department End Date",
+          oldValue: rowData.endDate ? toLocalYmd(rowData.endDate) : "No end date",
+          newValue: endYmd,
+        });
+      }
     },
-    [emp?.businessEntityID, reloadEmployee],
+    [emp?.businessEntityID, reloadEmployee, isHR, ownId, effectiveId, hrEmployeeIds],
   );
 
   /* Create Department Movement */
@@ -1053,20 +1101,64 @@ export default function DashboardFuncionario() {
       // Option A: server is source of truth — refresh canonical data
       await reloadEmployee();
 
+      // Notify about department movement
+      if (isHR && ownId === effectiveId) {
+        const filteredHrIds = hrEmployeeIds.filter(id => id !== ownId);
+        await Promise.all(
+          filteredHrIds.map(hrId =>
+            notifyHRProfileChange({
+              fieldName: "Department Movement",
+              oldValue: "New Movement",
+              newValue: `Department ID: ${departmentID}`,
+              hrId
+            })
+          )
+        );
+      } else {
+        await notifyProfileChange({
+          fieldName: "Department Movement",
+          oldValue: "New Movement",
+          newValue: `Department ID: ${departmentID}`,
+        });
+      }
+
       // ✅ Close modal AFTER success
       setShowAddDeptModal(false);
     },
-    [emp?.businessEntityID, emp?.employeeDepartmentHistories, reloadEmployee],
+    [emp?.businessEntityID, emp?.employeeDepartmentHistories, reloadEmployee, isHR, ownId, effectiveId, hrEmployeeIds],
   );
 
   /* Create Pay History (Rate + Frequency only; server sets RateChangeDate = now) */
   const handleAddPayHistory = React.useCallback(
     async (rate, payFrequency) => {
-      setShowAddPayModal(false);
       await createPayHistory(emp.businessEntityID, rate, payFrequency);
       await reloadEmployee();
+
+      // Notify about pay history
+      const freqLabel = payFrequency === 1 ? "Monthly" : "Biweekly";
+      if (isHR && ownId === effectiveId) {
+        const filteredHrIds = hrEmployeeIds.filter(id => id !== ownId);
+        await Promise.all(
+          filteredHrIds.map(hrId =>
+            notifyHRProfileChange({
+              fieldName: "Pay History",
+              oldValue: "New Rate",
+              newValue: `€${rate}/hour (${freqLabel})`,
+              hrId
+            })
+          )
+        );
+      } else {
+        await notifyProfileChange({
+          fieldName: "Pay History",
+          oldValue: "New Rate",
+          newValue: `€${rate}/hour (${freqLabel})`,
+        });
+      }
+
+      setShowAddPayModal(false);
     },
-    [emp?.businessEntityID, reloadEmployee],
+    [emp?.businessEntityID, reloadEmployee, isHR, ownId, effectiveId, hrEmployeeIds],
   );
 
   /* AG Grid configuration */
@@ -1318,8 +1410,8 @@ export default function DashboardFuncionario() {
                   value={emp.phoneNumber ?? ""}
                   type="text"
                   validate={(v) =>
-                    v && !/^[+0-9()\-.\s]{6,25}$/.test(v)
-                      ? "Invalid phone format"
+                    v && !/^[+0-9]+$/.test(v)
+                      ? "Phone number can only contain numbers and +"
                       : null
                   }
                   onSave={savePhone}
